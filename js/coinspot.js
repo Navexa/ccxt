@@ -237,6 +237,7 @@ module.exports = class coinspot extends Exchange {
         const timestamp = this.parse8601(this.safeString(order, 'created'));
         const cost = this.safeString(order, 'audtotal');
         const totalNum = Number(cost);
+        const totalBase = this.safeString(order, 'total');
         const fee = this.safeString(order, 'audfeeExGst');
         const gst = this.safeString(order, 'audGst');
         const totalFee = Number(fee) + Number(gst);
@@ -257,7 +258,7 @@ module.exports = class coinspot extends Exchange {
             'price': price,
             'stopPrice': undefined,
             'amount': amount,
-            'cost': cost,
+            'cost': totalBase,
             'average': undefined,
             'filled': amount,
             'remaining': undefined,
