@@ -73,6 +73,10 @@ class gateio extends Exchange {
                 'cancelOrder' => true,
                 'createMarketOrder' => false,
                 'createOrder' => true,
+                'createPostOnlyOrder' => true,
+                'createStopLimitOrder' => true,
+                'createStopMarketOrder' => false,
+                'createStopOrder' => true,
                 'fetchBalance' => true,
                 'fetchBorrowRate' => false,
                 'fetchBorrowRateHistories' => false,
@@ -1111,7 +1115,7 @@ class gateio extends Exchange {
 
     public function fetch_currencies($params = array ()) {
         // sandbox/testnet only supports future markets
-        $apiBackup = $this->safe_string($this->urls, 'apiBackup');
+        $apiBackup = $this->safe_value($this->urls, 'apiBackup');
         if ($apiBackup !== null) {
             return null;
         }
@@ -1653,11 +1657,13 @@ class gateio extends Exchange {
         if ($limit !== null) {
             $request['limit'] = $limit; // default 10, max 100
         }
+        $request['with_id'] = true;
         $response = yield $this->$method (array_merge($request, $params));
         //
         // SPOT
         //
         //     {
+        //         "id":6358770031
         //         "current" => 1634345973275,
         //         "update" => 1634345973271,
         //         "asks" => [
@@ -1688,6 +1694,7 @@ class gateio extends Exchange {
         // Perpetual Swap
         //
         //     {
+        //         "id":6358770031
         //         "current" => 1634350208.745,
         //         "asks" => array(
         //             array("s":24909,"p" => "61264.8"),
@@ -1722,7 +1729,10 @@ class gateio extends Exchange {
         }
         $priceKey = $spotOrMargin ? 0 : 'p';
         $amountKey = $spotOrMargin ? 1 : 's';
-        return $this->parse_order_book($response, $symbol, $timestamp, 'bids', 'asks', $priceKey, $amountKey);
+        $nonce = $this->safe_integer($response, 'id');
+        $result = $this->parse_order_book($response, $symbol, $timestamp, 'bids', 'asks', $priceKey, $amountKey);
+        $result['nonce'] = $nonce;
+        return $result;
     }
 
     public function fetch_ticker($symbol, $params = array ()) {
@@ -2503,16 +2513,7 @@ class gateio extends Exchange {
         //       "memo" => null
         //     }
         //
-        $currencyId = $this->safe_string($response, 'currency');
-        $id = $this->safe_string($response, 'id');
-        return array(
-            'info' => $response,
-            'id' => $id,
-            'code' => $this->safe_currency_code($currencyId),
-            'amount' => $this->safe_number($response, 'amount'),
-            'address' => $this->safe_string($response, 'address'),
-            'tag' => $this->safe_string($response, 'memo'),
-        );
+        return $this->parse_transaction($response, $currency);
     }
 
     public function parse_transaction_status($status) {
@@ -2551,6 +2552,17 @@ class gateio extends Exchange {
         //     }
         //
         // withdrawals
+        //
+        // withdraw
+        //
+        //     {
+        //       "id" => "w13389675",
+        //       "currency" => "USDT",
+        //       "amount" => "50",
+        //       "address" => "TUu2rLFrmzUodiWfYki7QCNtv1akL682p1",
+        //       "memo" => null
+        //     }
+        //
         $id = $this->safe_string($transaction, 'id');
         $type = null;
         $amount = $this->safe_string($transaction, 'amount');
@@ -2605,7 +2617,7 @@ class gateio extends Exchange {
          * @param {float} $price *ignored in "market" orders* the $price at which the order is to be fullfilled at in units of the quote currency
          * @param {dict} $params  Extra parameters specific to the exchange API endpoint
          * @param {float} $params->stopPrice The $price at which a $trigger order is triggered at
-         * @param {str} $params->timeInForce "gtc" for GoodTillCancelled, "ioc" for ImmediateOrCancelled or poc for PendingOrCancelled
+         * @param {str} $params->timeInForce "GTC", "IOC", or "PO"
          * @param {int} $params->iceberg Amount to display for the iceberg order, Null or 0 for normal orders, Set to -1 to hide the order completely
          * @param {str} $params->text User defined information
          * @param {str} $params->account *spot and margin only* "spot", "margin" or "cross_margin"
@@ -2624,7 +2636,12 @@ class gateio extends Exchange {
         $reduceOnly = $this->safe_value_2($params, 'reduce_only', 'reduceOnly');
         $defaultTimeInForce = $this->safe_value_2($params, 'tif', 'time_in_force', 'gtc');
         $timeInForce = $this->safe_value($params, 'timeInForce', $defaultTimeInForce);
+        $postOnly = false;
+        list($type, $postOnly, $timeInForce, $params) = $this->is_post_only($type, $timeInForce, null, $params);
         $params = $this->omit($params, array( 'stopPrice', 'reduce_only', 'reduceOnly', 'tif', 'time_in_force', 'timeInForce' ));
+        if ($postOnly) {
+            $timeInForce = 'poc';
+        }
         $isLimitOrder = ($type === 'limit');
         $isMarketOrder = ($type === 'market');
         if ($isLimitOrder && $price === null) {
@@ -2654,7 +2671,7 @@ class gateio extends Exchange {
                     'price' => $this->price_to_precision($symbol, $price), // 0 for $market order with tif set as ioc
                     // 'close' => false, // true to close the position, with size set to 0
                     // 'reduce_only' => false, // St as true to be reduce-only order
-                    // 'tif' => 'gtc', // gtc, ioc, poc PendingOrCancelled == postOnly order
+                    // 'tif' => 'gtc', // gtc, ioc, poc PendingOrCancelled == $postOnly order
                     // 'text' => $clientOrderId, // 't-abcdef1234567890',
                     // 'auto_size' => '', // close_long, close_short, note size also needs to be set to 0
                     'settle' => $market['settleId'], // filled in prepareRequest above
@@ -2679,7 +2696,7 @@ class gateio extends Exchange {
                     'side' => $side,
                     'amount' => $this->amount_to_precision($symbol, $amount),
                     'price' => $this->price_to_precision($symbol, $price),
-                    // 'time_in_force' => 'gtc', // gtc, ioc, poc PendingOrCancelled == postOnly order
+                    // 'time_in_force' => 'gtc', // gtc, ioc, poc PendingOrCancelled == $postOnly order
                     // 'iceberg' => 0, // $amount to display for the iceberg order, null or 0 for normal orders, set to -1 to hide the order completely
                     // 'auto_borrow' => false, // used in margin or cross margin trading to allow automatic loan of insufficient $amount if balance is not enough
                     // 'auto_repay' => false, // automatic repayment for automatic borrow loan generated by cross margin order, diabled by default
@@ -3102,8 +3119,17 @@ class gateio extends Exchange {
         $stop = $this->safe_value_2($params, 'is_stop_order', 'stop', false);
         $params = $this->omit($params, array( 'is_stop_order', 'stop' ));
         $market = $this->market($symbol);
+        $clientOrderId = $this->safe_string_2($params, 'text', 'clientOrderId');
+        $orderId = $id;
+        if ($clientOrderId !== null) {
+            $params = $this->omit($params, array( 'text', 'clientOrderId' ));
+            if ($clientOrderId[0] !== 't') {
+                $clientOrderId = 't-' . $clientOrderId;
+            }
+            $orderId = $clientOrderId;
+        }
         $request = array(
-            'order_id' => $id,
+            'order_id' => $orderId,
         );
         if ($market['spot'] || $market['margin']) {
             $request['currency_pair'] = $market['id'];
@@ -3463,7 +3489,7 @@ class gateio extends Exchange {
         }
         $response = yield $this->privateWalletPostTransfers (array_merge($request, $params));
         //
-        // according to the docs
+        // according to the docs (however actual $response seems to be an empty string '')
         //
         //     {
         //       "currency" => "BTC",
@@ -3473,20 +3499,26 @@ class gateio extends Exchange {
         //       "currency_pair" => "BTC_USDT"
         //     }
         //
-        // actual $response
-        //
-        //  POST https://api.gateio.ws/api/v4/wallet/transfers 204 No Content
-        //
+        $transfer = $this->parse_transfer($response, $currency);
+        return array_merge($transfer, array(
+            'fromAccount' => $fromAccount,
+            'toAccount' => $toAccount,
+            'amount' => $this->parse_number($truncated),
+        ));
+    }
+
+    public function parse_transfer($transfer, $currency = null) {
+        $timestamp = $this->milliseconds();
         return array(
-            'info' => $response,
             'id' => null,
-            'timestamp' => null,
-            'datetime' => null,
-            'currency' => $code,
-            'amount' => $truncated,
-            'fromAccount' => $fromId,
-            'toAccount' => $toId,
+            'timestamp' => $timestamp,
+            'datetime' => $this->iso8601($timestamp),
+            'currency' => $this->safe_currency_code(null, $currency),
+            'amount' => null,
+            'fromAccount' => null,
+            'toAccount' => null,
             'status' => null,
+            'info' => $transfer,
         );
     }
 
@@ -3908,8 +3940,8 @@ class gateio extends Exchange {
             $tiers[] = array(
                 'tier' => $this->parse_number(Precise::string_div($cap, $riskLimitStep)),
                 'currency' => $this->safe_string($market, 'settle'),
-                'notionalFloor' => $this->parse_number($floor),
-                'notionalCap' => $this->parse_number($cap),
+                'minNotional' => $this->parse_number($floor),
+                'maxNotional' => $this->parse_number($cap),
                 'maintenanceMarginRate' => $this->parse_number($maintenanceMarginRate),
                 'maxLeverage' => $this->parse_number(Precise::string_div('1', $initialMarginRatio)),
                 'info' => $info,
