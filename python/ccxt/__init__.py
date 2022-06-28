@@ -22,7 +22,7 @@
 
 # ----------------------------------------------------------------------------
 
-__version__ = '1.82.60'
+__version__ = '1.89.15'
 
 # ----------------------------------------------------------------------------
 
@@ -108,6 +108,7 @@ from ccxt.bl3p import bl3p                                  # noqa: F401
 from ccxt.blockchaincom import blockchaincom                # noqa: F401
 from ccxt.btcalpha import btcalpha                          # noqa: F401
 from ccxt.btcbox import btcbox                              # noqa: F401
+from ccxt.btcex import btcex                                # noqa: F401
 from ccxt.btcmarkets import btcmarkets                      # noqa: F401
 from ccxt.btctradeua import btctradeua                      # noqa: F401
 from ccxt.btcturk import btcturk                            # noqa: F401
@@ -123,6 +124,7 @@ from ccxt.coinbasepro import coinbasepro                    # noqa: F401
 from ccxt.coincheck import coincheck                        # noqa: F401
 from ccxt.coinex import coinex                              # noqa: F401
 from ccxt.coinfalcon import coinfalcon                      # noqa: F401
+from ccxt.coinflex import coinflex                          # noqa: F401
 from ccxt.coinmate import coinmate                          # noqa: F401
 from ccxt.coinone import coinone                            # noqa: F401
 from ccxt.coinspot import coinspot                          # noqa: F401
@@ -138,6 +140,7 @@ from ccxt.flowbtc import flowbtc                            # noqa: F401
 from ccxt.fmfwio import fmfwio                              # noqa: F401
 from ccxt.ftx import ftx                                    # noqa: F401
 from ccxt.ftxus import ftxus                                # noqa: F401
+from ccxt.gate import gate                                  # noqa: F401
 from ccxt.gateio import gateio                              # noqa: F401
 from ccxt.gemini import gemini                              # noqa: F401
 from ccxt.hitbtc import hitbtc                              # noqa: F401
@@ -230,6 +233,7 @@ exchanges = [
     'blockchaincom',
     'btcalpha',
     'btcbox',
+    'btcex',
     'btcmarkets',
     'btctradeua',
     'btcturk',
@@ -245,6 +249,7 @@ exchanges = [
     'coincheck',
     'coinex',
     'coinfalcon',
+    'coinflex',
     'coinmate',
     'coinone',
     'coinspot',
@@ -260,6 +265,7 @@ exchanges = [
     'fmfwio',
     'ftx',
     'ftxus',
+    'gate',
     'gateio',
     'gemini',
     'hitbtc',

@@ -51,7 +51,7 @@ Exchanges
 
 
 
-The CCXT library currently supports the following 116 cryptocurrency exchange markets and trading APIs:
+The CCXT library currently supports the following 118 cryptocurrency exchange markets and trading APIs:
 
 .. list-table::
    :header-rows: 1
@@ -270,11 +270,11 @@ The CCXT library currently supports the following 116 cryptocurrency exchange ma
           :alt: CCXT Pro
      
    * - .. image:: https://user-images.githubusercontent.com/1294454/27766244-e328a50c-5ed2-11e7-947b-041416579bb3.jpg
-          :target: https://www.bitfinex.com/?refcode=P61eYxFL
+          :target: https://www.bitfinex.com
           :alt: bitfinex2
      
      - bitfinex2
-     - `Bitfinex <https://www.bitfinex.com/?refcode=P61eYxFL>`__
+     - `Bitfinex <https://www.bitfinex.com>`__
      - .. image:: https://img.shields.io/badge/2-lightgray
           :target: https://docs.bitfinex.com/v2/docs/
           :alt: API Version 2
@@ -312,7 +312,7 @@ The CCXT library currently supports the following 116 cryptocurrency exchange ma
      - bitget
      - `Bitget <https://www.bitget.com/expressly?languageType=0&channelCode=ccxt&vipCode=tg9j>`__
      - .. image:: https://img.shields.io/badge/1-lightgray
-          :target: https://bitgetlimited.github.io/apidoc/en/swap
+          :target: https://bitgetlimited.github.io/apidoc/en/mix
           :alt: API Version 1
      
      - 
@@ -373,7 +373,10 @@ The CCXT library currently supports the following 116 cryptocurrency exchange ma
           :alt: API Version 3
      
      - 
-     - 
+     - .. image:: https://img.shields.io/badge/CCXT-Pro-black
+          :target: https://ccxt.pro
+          :alt: CCXT Pro
+     
    * - .. image:: https://user-images.githubusercontent.com/51840849/87591171-9a377d80-c6f0-11ea-94ac-97a126eac3bc.jpg
           :target: https://www.bitpanda.com/en/pro
           :alt: bitpanda
@@ -452,7 +455,7 @@ The CCXT library currently supports the following 116 cryptocurrency exchange ma
           :target: https://ccxt.pro
           :alt: CCXT Pro
      
-   * - .. image:: https://user-images.githubusercontent.com/1294454/83165440-2f1cf200-a116-11ea-9046-a255d09fb2ed.jpg
+   * - .. image:: https://user-images.githubusercontent.com/1294454/169202626-bd130fc5-fcf9-41bb-8d97-6093225c73cd.jpg
           :target: https://bitvavo.com/?a=24F34952F7
           :alt: bitvavo
      
@@ -530,6 +533,18 @@ The CCXT library currently supports the following 116 cryptocurrency exchange ma
      
      - 
      - 
+   * - .. image:: https://user-images.githubusercontent.com/1294454/173489620-d49807a4-55cd-4f4e-aca9-534921298bbf.jpg
+          :target: https://www.btcex.com/en-us/register?i=48biatg1
+          :alt: btcex
+     
+     - btcex
+     - `BTCEX <https://www.btcex.com/en-us/register?i=48biatg1>`__
+     - .. image:: https://img.shields.io/badge/1-lightgray
+          :target: https://docs.btcex.com/
+          :alt: API Version 1
+     
+     - 
+     - 
    * - .. image:: https://user-images.githubusercontent.com/51840849/89731817-b3fb8480-da52-11ea-817f-783b08aaf32b.jpg
           :target: https://btcmarkets.net
           :alt: btcmarkets
@@ -591,17 +606,20 @@ The CCXT library currently supports the following 116 cryptocurrency exchange ma
      - 
      - 
    * - .. image:: https://user-images.githubusercontent.com/51840849/76547799-daff5b80-649e-11ea-87fb-3be9bac08954.jpg
-          :target: https://www.bybit.com/app/register?ref=X7Prm
+          :target: https://partner.bybit.com/b/ccxt
           :alt: bybit
      
      - bybit
-     - `Bybit <https://www.bybit.com/app/register?ref=X7Prm>`__
+     - `Bybit <https://partner.bybit.com/b/ccxt>`__
      - .. image:: https://img.shields.io/badge/2-lightgray
           :target: https://bybit-exchange.github.io/docs/inverse/
           :alt: API Version 2
      
      - 
-     - 
+     - .. image:: https://img.shields.io/badge/CCXT-Pro-black
+          :target: https://ccxt.pro
+          :alt: CCXT Pro
+     
    * - .. image:: https://user-images.githubusercontent.com/1294454/67288762-2f04a600-f4e6-11e9-9fd6-c60641919491.jpg
           :target: https://www.byte-trade.com
           :alt: bytetrade
@@ -703,7 +721,10 @@ The CCXT library currently supports the following 116 cryptocurrency exchange ma
           :alt: API Version 1
      
      - 
-     - 
+     - .. image:: https://img.shields.io/badge/CCXT-Pro-black
+          :target: https://ccxt.pro
+          :alt: CCXT Pro
+     
    * - .. image:: https://user-images.githubusercontent.com/1294454/41822275-ed982188-77f5-11e8-92bb-496bcd14ca52.jpg
           :target: https://coinfalcon.com/?ref=CFJSVGTUPASB
           :alt: coinfalcon
@@ -716,6 +737,21 @@ The CCXT library currently supports the following 116 cryptocurrency exchange ma
      
      - 
      - 
+   * - .. image:: https://user-images.githubusercontent.com/1294454/168937923-80d6af4a-43b5-4ed9-9d53-31065656be4f.jpg
+          :target: https://coinflex.com/user-console/register?shareAccountId=S6Y87a8P
+          :alt: coinflex
+     
+     - coinflex
+     - `CoinFLEX <https://coinflex.com/user-console/register?shareAccountId=S6Y87a8P>`__
+     - .. image:: https://img.shields.io/badge/3-lightgray
+          :target: https://docs.coinflex.com/
+          :alt: API Version 3
+     
+     - 
+     - .. image:: https://img.shields.io/badge/CCXT-Pro-black
+          :target: https://ccxt.pro
+          :alt: CCXT Pro
+     
    * - .. image:: https://user-images.githubusercontent.com/51840849/87460806-1c9f3f00-c616-11ea-8c46-a77018a8f3f4.jpg
           :target: https://coinmate.io?referral=YTFkM1RsOWFObVpmY1ZjMGREQmpTRnBsWjJJNVp3PT0
           :alt: coinmate
@@ -775,7 +811,10 @@ The CCXT library currently supports the following 116 cryptocurrency exchange ma
           :alt: API Version 2
      
      - 
-     - 
+     - .. image:: https://img.shields.io/badge/CCXT-Pro-black
+          :target: https://ccxt.pro
+          :alt: CCXT Pro
+     
    * - .. image:: https://user-images.githubusercontent.com/1294454/83718672-36745c00-a63e-11ea-81a9-677b1f789a4d.jpg
           :target: https://currency.com/trading/signup?c=362jaimv&pid=referral
           :alt: currencycom
@@ -919,9 +958,9 @@ The CCXT library currently supports the following 116 cryptocurrency exchange ma
      
    * - .. image:: https://user-images.githubusercontent.com/1294454/31784029-0313c702-b509-11e7-9ccc-bc0da6a0e435.jpg
           :target: https://www.gate.io/ref/2436035
-          :alt: gateio
+          :alt: gate
      
-     - gateio
+     - gate
      - `Gate.io <https://www.gate.io/ref/2436035>`__
      - .. image:: https://img.shields.io/badge/4-lightgray
           :target: https://www.gate.io/docs/apiv4/en/index.html
@@ -946,7 +985,10 @@ The CCXT library currently supports the following 116 cryptocurrency exchange ma
           :alt: API Version 1
      
      - 
-     - 
+     - .. image:: https://img.shields.io/badge/CCXT-Pro-black
+          :target: https://ccxt.pro
+          :alt: CCXT Pro
+     
    * - .. image:: https://user-images.githubusercontent.com/1294454/27766555-8eaec20e-5edc-11e7-9c5b-6dc69fc42f5e.jpg
           :target: https://hitbtc.com/?ref_id=5a5d39a65d466
           :alt: hitbtc
@@ -1146,11 +1188,11 @@ The CCXT library currently supports the following 116 cryptocurrency exchange ma
      - 
      - 
    * - .. image:: https://user-images.githubusercontent.com/1294454/38063602-9605e28a-3302-11e8-81be-64b1e53c4cfb.jpg
-          :target: https://www.lbex.io/invite?icode=7QCY
+          :target: https://www.lbank.info/invitevip?icode=7QCY
           :alt: lbank
      
      - lbank
-     - `LBank <https://www.lbex.io/invite?icode=7QCY>`__
+     - `LBank <https://www.lbank.info/invitevip?icode=7QCY>`__
      - .. image:: https://img.shields.io/badge/1-lightgray
           :target: https://github.com/LBank-exchange/lbank-official-api-docs
           :alt: API Version 1
@@ -1158,13 +1200,13 @@ The CCXT library currently supports the following 116 cryptocurrency exchange ma
      - 
      - 
    * - .. image:: https://user-images.githubusercontent.com/1294454/38063602-9605e28a-3302-11e8-81be-64b1e53c4cfb.jpg
-          :target: https://www.lbex.io/invite?icode=7QCY
+          :target: https://www.lbank.info/invitevip?icode=7QCY
           :alt: lbank2
      
      - lbank2
-     - `LBank <https://www.lbex.io/invite?icode=7QCY>`__
+     - `LBank <https://www.lbank.info/invitevip?icode=7QCY>`__
      - .. image:: https://img.shields.io/badge/2-lightgray
-          :target: https://github.com/LBank-exchange/lbank-official-api-docs
+          :target: https://www.lbank.info/en-US/docs/index.html
           :alt: API Version 2
      
      - 
@@ -1407,7 +1449,7 @@ The CCXT library currently supports the following 116 cryptocurrency exchange ma
      - stex
      - `STEX <https://app.stex.com?ref=36416021>`__
      - .. image:: https://img.shields.io/badge/3-lightgray
-          :target: https://help.stex.com/en/collections/1593608-api-v3-documentation
+          :target: https://apidocs.stex.com/
           :alt: API Version 3
      
      - 
@@ -1816,7 +1858,7 @@ Here's an overview of generic exchange properties with values added for example:
            'createDepositAddress': false,
            'createOrder': true,
            'fetchBalance': true,
-           'fetchCancelledOrders': false,
+           'fetchCanceledOrders': false,
            'fetchClosedOrder': false,
            'fetchClosedOrders': false,
            'fetchCurrencies': false,
@@ -1932,7 +1974,7 @@ Below is a detailed description of each of the base exchange properties:
   ``markets_by_id``\ : An associative array of markets indexed by exchange-specific ids. Markets should be loaded prior to accessing this property.
 
  * 
-  `proxy`: A string literal containing base URL of http(s) proxy, `''` by default. For use with web browsers and from blocked locations. An example of a proxy string is `'http://crossorigin.me/'`. The absolute exchange endpoint URL is appended to this string before sending the HTTP request.
+  `proxy`: A string literal containing base URL of http(s) proxy, `''` by default. For use with web browsers and from blocked locations. An example of a proxy string is `'http://cors-anywhere.herokuapp.com/'`. The absolute exchange endpoint URL is appended to this string before sending the HTTP request.
 
  * 
   ``apiKey``\ : This is your public API key string literal. Most exchanges require :ref:`API keys setup <api keys setup>`.
@@ -1979,7 +2021,7 @@ Exchange Metadata
            'createDepositAddress': false,
            'createOrder': true,
            'fetchBalance': true,
-           'fetchCancelledOrders': false,
+           'fetchCanceledOrders': false,
            'fetchClosedOrder': false,
            'fetchClosedOrders': false,
            'fetchCurrencies': false,
@@ -2195,14 +2237,18 @@ Currency Structure
        'active':    true,       // boolean, currency status (tradeable and withdrawable)
        'fee':       0.123,      // withdrawal fee, flat
        'precision': 8,          // number of decimal digits "after the dot" (depends on exchange.precisionMode)
+       'deposit':   true        // boolean, deposits are available
+       'withdraw':  true        // boolean, withdraws are available
        'limits': {              // value limits when placing orders on this market
            'amount': {
                'min': 0.01,     // order amount should be > min
                'max': 1000,     // order amount should be < max
            },
            'withdraw': { ... }, // withdrawal limits
+           'deposit': {...},
        },
-       'info': { ... }, // the original unparsed currency info from the exchange
+       'networks': {...}        // network structures indexed by unified network identifiers (ERC20, TRC20, BSC, etc)
+       'info': { ... },         // the original unparsed currency info from the exchange
    }
 
 Each currency is an associative array (aka dictionary) with the following keys:
@@ -2215,7 +2261,44 @@ Each currency is an associative array (aka dictionary) with the following keys:
  * ``active``. A boolean indicating whether trading or funding (depositing or withdrawing) for this currency is currently possible, more about it here: :ref:`\ ``active`` status <active status>`.
  * ``info``. An associative array of non-common market properties, including fees, rates, limits and other general market information. The internal info array is different for each particular market, its contents depend on the exchange.
  * ``precision``. Precision accepted in values by exchanges upon referencing this currency. The value of this property depends on :ref:`\ ``exchange.precisionMode`` <precision mode>`.
- * ``limits``. The minimums and maximums for amounts (volumes) and withdrawals.
+ * ``limits``. The minimums and maximums for amounts (volumes), withdrawals and deposits.
+
+Network structure
+-----------------
+
+.. code-block:: JavaScript
+
+   {
+       'id':       'tron',         // string literal for referencing within an exchange
+       'network':  'TRC20'         // unified network
+       'name':     'Tron Network', // string, human-readable name, if specified
+       'active':    true,          // boolean, currency status (tradeable and withdrawable)
+       'fee':       0.123,         // withdrawal fee, flat
+       'precision': 8,             // number of decimal digits "after the dot" (depends on exchange.precisionMode)
+       'deposit':   true           // boolean, deposits are available
+       'withdraw':  true           // boolean, withdraws are available
+       'limits': {                 // value limits when placing orders on this market
+           'amount': {
+               'min': 0.01,        // order amount should be > min
+               'max': 1000,        // order amount should be < max
+           },
+           'withdraw': { ... },    // withdrawal limits
+           'deposit': {...},       // deposit limits
+       },
+       'info': { ... },            // the original unparsed currency info from the exchange
+   }
+
+Each network is an associative array (aka dictionary) with the following keys:
+
+
+ * ``id``. The string or numeric ID of the network within the exchange. Network ids are used inside exchanges internally to identify networks during the request/response process.
+ * ``network``. An uppercase string representation of a particular network. Networks are used to reference networks within the ccxt library.
+ * ``name``. A human-readable name of the network (can be a mix of uppercase & lowercase characters).
+ * ``fee``. The withdrawal fee value as specified by the exchange. In most cases it means a flat fixed amount paid in the same currency. If the exchnange does not specify it via public endpoints, the ``fee`` can be ``undefined/None/null`` or missing.
+ * ``active``. A boolean indicating whether trading or funding (depositing or withdrawing) for this currency is currently possible, more about it here: :ref:`\ ``active`` status <active status>`.
+ * ``info``. An associative array of non-common market properties, including fees, rates, limits and other general market information. The internal info array is different for each particular market, its contents depend on the exchange.
+ * ``precision``. Precision accepted in values by exchanges upon referencing this currency. The value of this property depends on :ref:`\ ``exchange.precisionMode`` <precision mode>`.
+ * ``limits``. The minimums and maximums for amounts (volumes), withdrawals and deposits.
 
 Market Structure
 ----------------
@@ -2551,7 +2634,7 @@ In order to load markets manually beforehand call the ``loadMarkets ()`` / ``loa
    // JavaScript
    (async () => {
        let kraken = new ccxt.kraken ()
-       let markets = await kraken.load_markets ()
+       let markets = await kraken.loadMarkets ()
        console.log (kraken.id, markets)
    }) ()
 
@@ -2830,12 +2913,12 @@ When exchange markets are loaded, you can then access market information any tim
    // JavaScript
    (async () => {
        let kraken = new ccxt.kraken ({ verbose: true }) // log HTTP requests
-       await kraken.load_markets () // request markets
+       await kraken.loadMarkets () // request markets
        console.log (kraken.id, kraken.markets)    // output a full list of all loaded markets
        console.log (Object.keys (kraken.markets)) // output a short list of market symbols
        console.log (kraken.markets['BTC/USD'])    // output single market details
-       await kraken.load_markets () // return a locally cached version, no reload
-       let reloadedMarkets = await kraken.load_markets (true) // force HTTP reload = true
+       await kraken.loadMarkets () // return a locally cached version, no reload
+       let reloadedMarkets = await kraken.loadMarkets (true) // force HTTP reload = true
        console.log (reloadedMarkets['ETH/BTC'])
    }) ()
 
@@ -3128,7 +3211,7 @@ The unified ccxt API is a subset of methods common among the exchanges. It curre
  * ``fetchOrder (id[, symbol[, params]])``
  * ``fetchOrders ([symbol[, since[, limit[, params]]]])``
  * ``fetchOpenOrders ([symbol[, since, limit, params]]]])``
- * ``fetchCancelledOrders ([symbol[, since[, limit[, params]]]])``
+ * ``fetchCanceledOrders ([symbol[, since[, limit[, params]]]])``
  * ``fetchClosedOrders ([symbol[, since[, limit[, params]]]])``
  * ``fetchMyTrades ([symbol[, since[, limit[, params]]]])``
  * ...
@@ -3901,6 +3984,38 @@ The ``since`` argument is an integer UTC timestamp **in milliseconds** (everywhe
 
 If ``since`` is not specified the ``fetchOHLCV`` method will return the time range as is the default from the exchange itself.  This is not a bug. Some exchanges will return candles from the beginning of time, others will return most recent candles only, the exchanges' default behaviour is expected. Thus, without specifying ``since`` the range of returned candles will be exchange-specific. One should pass  the ``since`` argument to ensure getting precisely the history range needed.
 
+Notes On Latency
+^^^^^^^^^^^^^^^^
+
+Trading strategies require fresh up-to-date information for technical analysis, indicators and signals. Building a speculative trading strategy based on the OHLCV candles received from the exchange may have critical drawbacks. Developers should account for the details explained in this section to build successful bots.
+
+First and foremost, when using CCXT you're talking to the exchanges directly. CCXT is not a server, nor a service, it's a software library. All data that you are getting with CCXT is received directly from the exchanges first-hand.
+
+The exchanges usually provide two categories of public market data:
+
+
+#. Fast primary first-order data that includes real time orderbooks and trades or fills
+#. Slow second-order data that includes secondary tickers and kline OHLCV candles, that are calculated from the first-order data
+
+The primary first-order data is updated by the exchanges APIs in pseudo real time, or as close to real time as possible, as fast as possible. The second-order data requires time for the exchange to calculate it. For example, a ticker is nothing more than a rolling 24-hour statistical cut of orderbooks and trades. OHLCV candles and volumes are also calculated from first-order trades and represent fixed statistical cuts of specific periods. The volume traded within an hour is just a sum of traded volumes of the corresponding trades that happened within that hour.
+
+Obviously, it takes some time for the exchange to collect the first-order data and calculate the secondary statistical data from it. That literally means that **tickers and OHLCVs are always slower than orderbooks and trades**. In other words, there is always some latency in the exchange API between the moment when a trade happens and the moment when a corresponding OHLCV candle is updated or published by the exchange API.
+
+The latency (or how much time is needed by the exchange API for calculating the secondary data) depends on how fast the exchange engine is, so it is exchange-specific. Top exchange engines will usually return and update fresh last-minute OHLCV candles and tickers at a very fast rate. Some exchanges might do it in regular intervals like once a second or once in a few seconds. Slow exchange engines might take minutes to update the secondary statistical information, their APIs might return the current most recent OHLCV candle a few minutes late.
+
+If your strategy depends on the fresh last-minute most recent data you don't want to build it based on tickers or OHLCVs received from the exchange. Tickers and exchanges' OHLCVs are only suitable for display purposes, or for simple trading strategies for hour-timeframes or day-timeframes that are less susceptible to latency.
+
+Thankfully, the developers of time-critical trading strategies don't have to rely on secondary data from the exchanges and can calculate the OHLCVs and tickers in the userland. That may be faster and more efficient than waiting for the exchanges to update the info on their end. One can aggregate the public trade history by polling it frequently and calculate candles by walking over the list of trades. CCXT offers a ``buildOHLCVC/build_ohlcvc`` base method for that:
+
+
+ * JavaScript: https://github.com/ccxt/ccxt/blob/master/js/base/functions/misc.js#L43
+ * Python: https://github.com/ccxt/ccxt/blob/master/python/ccxt/base/exchange.py#L1933
+ * PHP: https://github.com/ccxt/ccxt/blob/master/php/Exchange.php#L631
+
+Due to the differences in their internal implementations the exchanges may be faster to update their primary and secondary market data over WebSockets (see https://ccxt.pro). The latency remains exchange-specific, cause the exchange engine still needs time to calculate the secondary data, regardless of whether you're polling it over the RESTful API with CCXT or getting updates via WebSockets with CCXT Pro. WebSockets can improve the networking latency, so a fast exchange will work even better, but adding the support for WS subscriptions will not make a slow exchange engine work much faster.
+
+If you want to stay on top of the second-order data latency, then you will have to calculate it on your side and beat the exchange engine in speed of doing so. Depending on the needs of your application, it may be tricky, since you will need to handle redundancy, "data holes" in the history, exchange downtimes, and other aspects of data aggregation which is a whole universe in itself that is impossible to fully cover in this Manual.
+
 OHLCV Structure
 ^^^^^^^^^^^^^^^
 
@@ -3915,7 +4030,7 @@ The fetchOHLCV method shown above returns a list (a flat array) of OHLCV candles
            4240.6,        // (H)ighest price, float
            4230.0,        // (L)owest price, float
            4230.7,        // (C)losing price, float
-           37.72941911    // (V)olume (in terms of the base currency), float
+           37.72941911    // (V)olume float (usually in terms of the base currency, the exchanges docstring may list whether quote or base units are used)
        ],
        ...
    ]
@@ -4105,6 +4220,101 @@ The possible values in the ``status`` field are:
  * ``'shutdown``\ ' means the exchange was closed, and the ``updated`` field should contain the datetime of the shutdown
  * ``'error'`` means that either the exchange API is broken, or the implementation of the exchange in CCXT is broken
  * ``'maintenance'`` means regular maintenance, and the ``eta`` field should contain the datetime when the exchange is expected to be operational again
+
+Borrow Rates
+------------
+
+ *margin only*
+
+When short trading or trading with leverage on a spot market, currency must be borrowed. Interest is accrued for the borrowed currency.
+
+Data on the borrow rate for a currency can be retrieved using
+
+
+ * ``fetchBorrowRate ()`` for a single currencies borrow rate
+ * ``fetchBorrowRates ()`` for all currencies borrow rates
+ * ``fetchBorrowRatesPerSymbol ()`` for the borrow rates of currencies in individual markets
+
+.. code-block:: Javascript
+
+   fetchBorrowRate (code, params = {})
+
+Parameters
+
+
+ * **code** (String) Unified CCXT currency code, required (e.g. ``"USDT"``\ )
+ * **params** (Dictionary) Parameters specific to the exchange API endpoint (e.g. ``{"marginMode": "cross"}``\ )
+
+Returns
+
+
+ * A :ref:`transaction structure <transaction structure>`
+
+.. code-block:: Javascript
+
+   fetchBorrowRates (params = {})
+
+Parameters
+
+
+ * **params** (Dictionary) Parameters specific to the exchange API endpoint (e.g. ``{"marginMode": "cross"}``\ )
+
+Returns
+
+
+ * A dictionary of :ref:`borrow rate structures <borrow rate structure>` with unified currency codes as keys
+
+.. code-block:: Javascript
+
+   fetchBorrowRatesPerSymbol (params = {})
+
+Parameters
+
+
+ * **params** (Dictionary) Parameters specific to the exchange API endpoint (e.g. ``{"marginMode": "cross"}``\ )
+
+Returns
+
+
+ * A dictionary of :ref:`borrow rate structures <borrow rate structure>` with unified market symbols as keys
+
+Borrow Rate Structure
+^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: JavaScript
+
+   {
+     currency: 'USDT',  // Unified currency code
+     rate: 0.0006,  // A ratio of the rate that interest is accrued at
+     period: 86400000,  // The amount of time in milliseconds that is required to accrue the interest amount specified by rate
+     timestamp: 1646956800000,  // Timestamp for when the currency had this rate
+     datetime: '2022-03-11T00:00:00.000Z',  // Datetime for when the currency had this rate
+     info: [ ... ]
+   }
+
+Borrow Rate History
+-------------------
+
+ *margin only*
+
+The ``fetchBorrowRateHistory`` method retrieves a history of a currencies borrow interest rate at specific time slots
+
+.. code-block:: Javascript
+
+   fetchBorrowRateHistory (code, since = undefined, limit = undefined, params = {})
+
+Parameters
+
+
+ * **code** (String) *required* Unified CCXT currency code (e.g. ``"USDT"``\ )
+ * **since** (Integer) Timestamp for the earliest borrow rate (e.g. ``1645807945000``\ )
+ * **limit** (Integer) The maximum number of :ref:`borrow rate structures <borrow rate structure>` to retrieve (e.g. ``10``\ )
+ * **params** (Dictionary) Extra parameters specific to the exchange API endpoint (e.g. ``{"endTime": 1645807945000}``\ )
+
+Returns
+
+
+ * An array of :ref:`borrow rate structures <borrow rate structure>`
 
 Leverage Tiers
 --------------
@@ -4303,100 +4513,51 @@ Funding Rate History Structure
        datetime: "2022-01-23T16:00:00.000Z"
    }
 
-Borrow Rates
-------------
+Open Interest History
+---------------------
 
- *margin only*
+ *contract only*
 
-When short trading or trading with leverage on a spot market, currency must be borrowed. Interest is accrued for the borrowed currency.
+Use the ``fetchOpenInterestHistory`` method to get a history of open interest for a symbol from the exchange.
 
-Data on the borrow rate for a currency can be retrieved using
+.. code-block:: JavaScript
 
-
- * ``fetchBorrowRate ()`` for a single currencies borrow rate
- * ``fetchBorrowRates ()`` for all currencies borrow rates
- * ``fetchBorrowRatesPerSymbol ()`` for the borrow rates of currencies in individual markets
-
-.. code-block:: Javascript
-
-   fetchBorrowRate (code, params = {})
+   fetchOpenInterestHistory (symbol, timeframe = '5m', since = undefined, limit = undefined, params = {})
 
 Parameters
 
 
- * **code** (String) Unified CCXT currency code, required (e.g. ``"USDT"``\ )
- * **params** (Dictionary) Parameters specific to the exchange API endpoint (e.g. ``{"marginMode": "cross"}``\ )
+ * **symbol** (String) Unified CCXT market symbol (e.g. ``"BTC/USDT:USDT"``\ )
+ * **timeframe** (String) Check exchange.timeframes for available values
+ * **since** (Integer) Timestamp for the earliest open interest record (e.g. ``1645807945000``\ )
+ * **limit** (Integer) The maximum number of :ref:`open interest structures <open interest structures>` to retrieve (e.g. ``10``\ )
+ * **params** (Dictionary) Extra parameters specific to the exchange API endpoint (e.g. ``{"endTime": 1645807945000}``\ )
+
+ **Note for OKX users:** instead of a unified symbol okx.fetchOpenInterestHistory expects a unified currency code in the **symbol** argument (e.g. ``'BTC'``\ ).
 
 Returns
 
 
- * A :ref:`transaction structure <transaction structure>`
+ * An array of :ref:`open interest structures <open interest structure>`
 
-.. code-block:: Javascript
-
-   fetchBorrowRates (params = {})
-
-Parameters
-
-
- * **params** (Dictionary) Parameters specific to the exchange API endpoint (e.g. ``{"marginMode": "cross"}``\ )
-
-Returns
-
-
- * A dictionary of :ref:`borrow rate structures <borrow rate structure>` with unified currency codes as keys
-
-.. code-block:: Javascript
-
-   fetchBorrowRatesPerSymbol (params = {})
-
-Parameters
-
-
- * **params** (Dictionary) Parameters specific to the exchange API endpoint (e.g. ``{"marginMode": "cross"}``\ )
-
-Returns
-
-
- * A dictionary of :ref:`borrow rate structures <borrow rate structure>` with unified market symbols as keys
-
-Borrow Rate Structure
-^^^^^^^^^^^^^^^^^^^^^
+Open Interest Structure
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: JavaScript
 
    {
-     currency: 'USDT',  // Unified currency code
-     rate: 0.0006,  // A ratio of the rate that interest is accrued at
-     period: 86400000,  // The amount of time in milliseconds that is required to accrue the interest amount specified by rate
-     timestamp: 1646956800000,  // Timestamp for when the currency had this rate
-     datetime: '2022-03-11T00:00:00.000Z',  // Datetime for when the currency had this rate
-     info: [ ... ]
+       symbol: 'BTC/USDT',
+       baseVolume: 80872.801,
+       quoteVolume: 3508262107.38,
+       timestamp: 1649379000000,
+       datetime: '2022-04-08T00:50:00.000Z',
+       info: {
+           symbol: 'BTCUSDT',
+           sumOpenInterest: '80872.80100000',
+           sumOpenInterestValue: '3508262107.38000000',
+           timestamp: '1649379000000'
+       }
    }
-
-Borrow Rate History
--------------------
-
- *margin only*
-
-The ``fetchBorrowRateHistory`` method retrieves a history of a currencies borrow interest rate at specific time slots
-
-.. code-block:: Javascript
-
-   fetchBorrowRateHistory (code, since = undefined, limit = undefined, params = {})
-
-Parameters
-
-
- * **code** (String) *required* Unified CCXT currency code (e.g. ``"USDT"``\ )
- * **since** (Integer) Timestamp for the earliest borrow rate (e.g. ``1645807945000``\ )
- * **limit** (Integer) The maximum number of :ref:`borrow rate structures <borrow rate structure>` to retrieve (e.g. ``10``\ )
- * **params** (Dictionary) Extra parameters specific to the exchange API endpoint (e.g. ``{"endTime": 1645807945000}``\ )
-
-Returns
-
-
- * An array of :ref:`borrow rate structures <borrow rate structure>`
 
 Positions Risk
 --------------
@@ -4459,7 +4620,7 @@ The exchanges' private APIs will usually allow the following types of interactio
 
 
  * the current state of the user's account balance can be obtained with the ``fetchBalance()`` method as described in the :ref:`Account Balance <account balance>` section
- * the user can place and cancel orders with ``createOrder()``\ , ``cancelOrder()``\ , as well as fetch current open orders and the past order history with methods like ``fetchOrder``\ , ``fetchOrders()``\ , ``fetchOpenOrder()``\ , ``fetchOpenOrders()``\ , ``fetchCancelledOrders``\ , ``fetchClosedOrder``\ , ``fetchClosedOrders``\ , as described in the section on :ref:`Orders <orders>`
+ * the user can place and cancel orders with ``createOrder()``\ , ``cancelOrder()``\ , as well as fetch current open orders and the past order history with methods like ``fetchOrder``\ , ``fetchOrders()``\ , ``fetchOpenOrder()``\ , ``fetchOpenOrders()``\ , ``fetchCanceledOrders``\ , ``fetchClosedOrder``\ , ``fetchClosedOrders``\ , as described in the section on :ref:`Orders <orders>`
  * the user can query the history of past trades executed with their account using ``fetchMyTrades``\ , as described in the :ref:`My Trades <my trades>` section, also see `How Orders Are Related To Trades <https://docs.ccxt.com/en/latest/manual.html#how-orders-are-related-to-trades>`__
  * the user can query their positions with ``fetchPositions()`` and ``fetchPosition()`` as described in the :ref:`Positions <positions>` section
  * the user can fetch the history of their transactions (on-chain *transactions* which are either *deposits* to the exchange account or *withdrawals* from the exchange account) with ``fetchTransactions()``\ , or with ``fetchDeposit()``\ , ``fetchDeposits()`` ``fetchWithdrawal()``\ , and ``fetchWithdrawals()`` separately, depending on what is available from the exchange API
@@ -4521,7 +4682,7 @@ For checking if the user has supplied all the required credentials the ``Exchang
    import ccxt
    exchange = ccxt.coinbasepro()
    print(exchange.requiredCredentials)  # prints required credentials
-   exchange.checkRequiredCredentials()  # raises AuthenticationError
+   exchange.check_required_credentials()  # raises AuthenticationError
 
 .. code-block:: PHP
 
@@ -4742,23 +4903,28 @@ The ``fetchAccounts()`` method will return a structure like shown below:
        {
            id: "s32kj302lasli3930",
            type: "main",
-           currency: "USDT",
+           name: "main",
+           code: "USDT",
            info: { ... }
        },
        {
            id: "20f0sdlri34lf90",
+           name: "customAccount",
            type: "margin",
-           currency: "USDT",
+           code: "USDT",
            info: { ... }
        },
        {
            id: "4oidfk40dadeg4328",
-           type: "trade",
-           currency: "BTC",
+           type: "spot",
+           name: "spotAccount32",
+           code: "BTC",
            info: { ... }
        },
        ...
    ]
+
+Types of account is one of the :ref:`unified account types <###Account-Balance>` or ``subaccount``
 
 Account Balance
 ---------------
@@ -6281,7 +6447,8 @@ Parameters
  * **params** (Dictionary) Parameters specific to the exchange API endpoint (e.g. ``{"endTime": 1645807945000}``\ )
  * **params.symbol** (String) Market symbol when transfering to or from a margin account (e.g. ``'BTC/USDT'``\ )
 
- **Account Types**
+Account Types
+^^^^^^^^^^^^^
 
 ``fromAccount`` and ``toAccount`` can accept the exchange account id or one of the following unified values:
 
@@ -6380,17 +6547,17 @@ Fees are often grouped into two categories:
 
 
  * Trading fees. Trading fee is the amount payable to the exchange, usually a percentage of volume traded (filled)).
- * Funding fees. The amount payable to the exchange upon depositing and withdrawing as well as the underlying crypto transaction fees (tx fees).
+ * Transaction fees. The amount payable to the exchange upon depositing and withdrawing as well as the underlying crypto transaction fees (tx fees).
 
 Because the fee structure can depend on the actual volume of currencies traded by the user, the fees can be account-specific. Methods to work with account-specific fees:
 
 .. code-block:: Javascript
 
    fetchFees (params = {})
-   fetchTradingFee (params = {})
+   fetchTradingFee (symbol, params = {})
    fetchTradingFees (params = {})
-   fetchFundingFee (params = {})
-   fetchFundingFees (params = {})
+   fetchTransactionFee (code, params = {})
+   fetchTransactionFees (codes  = undefined, params = {})
 
 The fee methods will return a unified fee structure, which is often present with orders and trades as well. The fee structure is a common format for representing the fee info throughout the library. Fee structures are usually indexed by market or currency.
 
@@ -6398,7 +6565,7 @@ Because this is still a work in progress, some or all of methods and info descri
 
  **DO NOT use the ``.fees`` property of the exchange instance as most often it contains the predefined/hardcoded info. Actual fees should only be accessed from markets and currencies.**
 
-``fetchFees`` will automatically call both ``fetchFundingFees`` and ``fetchTradingFees`` to get all the fee information. You can call fetchFundingFees or fetchTradingFees for more precise control over what endpoint on the exchange is requested.
+``fetchFees`` will automatically call both ``fetchTradingFees`` and ``fetchTransactionFees`` to get all the fee information. You can call ``fetchTradingFees`` or ``fetchTransactionFees`` for more precise control over what endpoint on the exchange is requested.
 
 Fee Structure
 ^^^^^^^^^^^^^
@@ -6436,16 +6603,16 @@ Fee Schedule
        },
        'trading': {
            'ETH/BTC': {
-                'maker': 0.001,
-                'taker': 0.002,
-                'info': { ... },
-                'symbol': 'ETH/BTC',
+               'maker': 0.001,
+               'taker': 0.002,
+               'info': { ... },
+               'symbol': 'ETH/BTC',
            },
            'LTC/BTC': {
-                'maker': 0.001,
-                'taker': 0.002,
-                'info': { ... },
-                'symbol': 'LTC/BTC',
+               'maker': 0.001,
+               'taker': 0.002,
+               'info': { ... },
+               'symbol': 'LTC/BTC',
            },
        },
    }
@@ -6556,45 +6723,46 @@ Trading Fee Structure
        },
    }
 
-Funding Fees
-^^^^^^^^^^^^
+Transaction Fees
+^^^^^^^^^^^^^^^^
 
-Funding fees are properties of currencies (account balance).
+Transaction fees are properties of currencies (account balance).
 
-Accessing funding fee rates should be done via the ``.currencies`` property. This aspect is not unified yet and is subject to change.
+Accessing transaction fee rates should be done via the ``.currencies`` property. This aspect is not unified yet and is subject to change.
 
 .. code-block:: Javascript
 
    exchange.currencies['ETH']['fee'] // tx/withdrawal fee rate for ETH
    exchange.currencies['BTC']['fee'] // tx/withdrawal fee rate for BTC
 
-Funding Fee Schedule
-~~~~~~~~~~~~~~~~~~~~
+Transaction Fee Schedule
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-Some exchanges have an endpoint for fetching the funding fee schedule, this is mapped to the unified methods
+Some exchanges have an endpoint for fetching the transaction fee schedule, this is mapped to the unified methods
 
 
- * ``fetchFundingFee ()`` for a single funding fee schedule
- * ``fetchFundingFees ()`` for all funding fee schedules
+ * ``fetchTransactionFee ()`` for a single transaction fee schedule
+ * ``fetchTransactionFees ()`` for all transaction fee schedules
 
 .. code-block:: Javascript
 
-   fetchFundingFee (code, params = {})
+   fetchTransactionFee (code, params = {})
 
 Parameters
 
 
  * **code** (String) *required* Unified CCXT currency code, required (e.g. ``"USDT"``\ )
  * **params** (Dictionary) Parameters specific to the exchange API endpoint (e.g. ``{"type": "deposit"}``\ )
+ * **params.network** (String) Specify unified CCXT network (e.g. ``{"network": "TRC20"}``\ )
 
 Returns
 
 
- * A :ref:`funding fee structure <funding fee structure>`
+ * A :ref:`transaction fee structure <transaction fee structure>`
 
 .. code-block:: Javascript
 
-   fetchFundingFees (params = {})
+   fetchTransactionFees (codes = undefined, params = {})
 
 Parameters
 
@@ -6604,10 +6772,10 @@ Parameters
 Returns
 
 
- * An array of :ref:`funding fee structures <funding fee structure>`
+ * An array of :ref:`transaction fee structures <transaction fee structure>`
 
-Funding Fee Structure
-"""""""""""""""""""""
+Transaction Fee Structure
+"""""""""""""""""""""""""
 
 .. code-block:: JavaScript
 
@@ -6623,12 +6791,54 @@ Funding Fee Structure
        'info': { ... },
    }
 
+Borrow Interest
+---------------
+
+
+ * margin only
+
+To trade with leverage in spot or margin markets, currency must be borrowed as a loan. This borrowed currency must be payed back with interest. To obtain the amount of interest that has accrued you can use the ``fetchBorrowInterest`` method
+
+.. code-block:: JavaScript
+
+   fetchBorrowInterest (code = undefined, symbol = undefined, since = undefined, limit = undefined, params = {})
+
+Parameters
+
+
+ * **code** (String) The unified currency code for the currency of the interest (e.g. ``"USDT"``\ )
+ * **symbol** (String) The market symbol of an isolated margin market, if undefined, the interest for cross margin markets is returned (e.g. ``"BTC/USDT:USDT"``\ )
+ * **since** (Integer) Timestamp (ms) of the earliest time to receive interest records for (e.g. ``1646940314000``\ )
+ * **limit** (Integer) The number of :ref:`borrow interest structures <borrow interest structure>` to retrieve (e.g. ``5``\ )
+ * **params** (Dictionary) Parameters specific to the exchange API endpoint (e.g. ``{"endTime": 1645807945000}``\ )
+
+Returns
+
+
+ * An array of :ref:`borrow interest structures <borrow interest structure>`
+
+Borrow Interest Structure
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: JavaScript
+
+   {
+       account: 'BTC/USDT',                    // The market that the interest was accrued in
+       currency: 'USDT',                       // The currency of the interest
+       interest: 0.00004842,                   // The amount of interest that was charged
+       interestRate: 0.0002,                   // The borrow interest rate
+       amountBorrowed: 5.81,                   // The amount of currency that was borrowed
+       timestamp: 1648699200000,               // The timestamp that the interest was charged
+       datetime: '2022-03-31T04:00:00.000Z',   // The datetime that the interest was charged
+       info: { ... }                           // Unparsed exchange response
+   }
+
 Margin
 ------
 
  *margin and contract only*
 
-To increase or reduce your margin balance (collateral) in an open leveraged position, use ``addMargin``  and ``reduceMargin`` respectively. This is kind of like adjusting the amount of leverage you're using with a position that's already open.
+To increase, reduce or set your margin balance (collateral) in an open leveraged position, use ``addMargin``\ , ``reduceMargin`` and ``setMargin`` respectively. This is kind of like adjusting the amount of leverage you're using with a position that's already open.
 
 Some scenarios to use these methods include
 
@@ -6640,6 +6850,7 @@ Some scenarios to use these methods include
 
    addMargin (symbol, amount, params = {})
    reduceMargin (symbol, amount, params = {})
+   setMargin (symbol, amount, params = {})
 
 Parameters
 
@@ -6660,8 +6871,9 @@ Margin Structure
 
    {
        info: { ... },
-       type: 'add',
-       amount: 1,
+       type: 'add', // 'add', 'reduce', 'set'
+       amount: 1, // amount added, reduced, or set
+       total: 2,  // total margin or undefined if not specified by the exchange
        code: 'USDT',
        symbol: 'XRP/USDT:USDT',
        status: 'ok'
@@ -6901,48 +7113,6 @@ Funding History Structure
        amount: -0.027722
    }
 
-Borrow Interest
----------------
-
-
- * margin only
-
-To trade with leverage in spot or margin markets, currency must be borrowed as a loan. This borrowed currency must be payed back with interest. To obtain the amount of interest that has accrued you can use the ``fetchBorrowInterest`` method
-
-.. code-block:: JavaScript
-
-   fetchBorrowInterest (code = undefined, symbol = undefined, since = undefined, limit = undefined, params = {})
-
-Parameters
-
-
- * **code** (String) The unified currency code for the currency of the interest (e.g. ``"USDT"``\ )
- * **symbol** (String) The market symbol of an isolated margin market, if undefined, the interest for cross margin markets is returned (e.g. ``"BTC/USDT:USDT"``\ )
- * **since** (Integer) Timestamp (ms) of the earliest time to receive interest records for (e.g. ``1646940314000``\ )
- * **limit** (Integer) The number of :ref:`borrow interest structures <borrow interest structure>` to retrieve (e.g. ``5``\ )
- * **params** (Dictionary) Parameters specific to the exchange API endpoint (e.g. ``{"endTime": 1645807945000}``\ )
-
-Returns
-
-
- * An array of :ref:`borrow interest structures <borrow interest structure>`
-
-Borrow Interest Structure
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: JavaScript
-
-   {
-       account: 'BTC/USDT',                    // The market that the interest was accrued in
-       currency: 'USDT',                       // The currency of the interest
-       interest: 0.00004842,                   // The amount of interest that was charged
-       interestRate: 0.0002,                   // The borrow interest rate
-       amountBorrowed: 5.81,                   // The amount of currency that was borrowed
-       timestamp: 1648699200000,               // The timestamp that the interest was charged
-       datetime: '2022-03-31T04:00:00.000Z',   // The datetime that the interest was charged
-       info: { ... }                           // Unparsed exchange response
-   }
-
 Error Handling
 ==============
 
@@ -6967,15 +7137,12 @@ To handle the errors you should add a ``try`` block around the call to a unified
        if (e instanceof ccxt.NetworkError) {
            console.log (exchange.id, 'fetchTicker failed due to a network error:', e.message)
            // retry or whatever
-           // ...
        } else if (e instanceof ccxt.ExchangeError) {
            console.log (exchange.id, 'fetchTicker failed due to exchange error:', e.message)
            // retry or whatever
-           // ...
        } else {
            console.log (exchange.id, 'fetchTicker failed with:', e.message)
            // retry or whatever
-           // ...
        }
    }
 
@@ -6990,15 +7157,12 @@ To handle the errors you should add a ``try`` block around the call to a unified
    except ccxt.NetworkError as e:
        print(exchange.id, 'fetch_order_book failed due to a network error:', str(e))
        # retry or whatever
-       # ...
    except ccxt.ExchangeError as e:
        print(exchange.id, 'fetch_order_book failed due to exchange error:', str(e))
        # retry or whatever
-       # ...
    except Exception as e:
        print(exchange.id, 'fetch_order_book failed with:', str(e))
        # retry or whatever
-       # ...
 
 .. code-block:: PHP
 
@@ -7011,15 +7175,12 @@ To handle the errors you should add a ``try`` block around the call to a unified
    } catch (\ccxt\NetworkError $e) {
        echo $exchange->id . ' fetch_trades failed due to a network error: ' . $e->getMessage () . "\n";
        // retry or whatever
-       // ...
    } catch (\ccxt\ExchangeError $e) {
        echo $exchange->id . ' fetch_trades failed due to exchange error: ' . $e->getMessage () . "\n";
        // retry or whatever
-       // ...
    } catch (Exception $e) {
        echo $exchange->id . ' fetch_trades failed with: ' . $e->getMessage () . "\n";
        // retry or whatever
-       // ...
    }
 
 Exception Hierarchy
@@ -7125,7 +7286,7 @@ In contrast, the ``ExchangeError`` is a critical error indeed, and it differs fr
 The distinction between the two families of exceptions is such that one family is recoverable and the other family is unrecoverable. ``NetworkError`` means you can retry later and it can magically go away by itself, so a subsequent retry may succeed and the user may be able to recover from a ``NetworkError`` just by waiting. An ``ExchangeError`` is a fatal error, so, it means, something went bad and it will go bad every time, unless you change the input.
 
 ExchangeError
--------------
+^^^^^^^^^^^^^
 
 This exception is thrown when an exchange server replies with an error in JSON. Possible reasons:
 
@@ -7148,12 +7309,12 @@ Other exceptions derived from ``ExchangeError``\ :
  * ``OrderNotFound``\ : Raised when you are trying to fetch or cancel a non-existent order.
 
 NetworkError
-------------
+^^^^^^^^^^^^
 
 All errors related to networking are usually recoverable, meaning that networking problems, traffic congestion, unavailability is usually time-dependent. Making a retry later is usually enough to recover from a NetworkError, but if it doesn't go away, then it may indicate some persistent problem with the exchange or with your connection.
 
 DDoSProtection
---------------
+~~~~~~~~~~~~~~
 
 This exception is thrown in either of two cases:
 
@@ -7161,16 +7322,8 @@ This exception is thrown in either of two cases:
  * when Cloudflare or Incapsula rate limiter restrictions are enforced per user or region/location
  * when the exchange restricts user access for requesting the endpoints in question too frequently
 
-In addition to default error handling, the ccxt library does a case-insensitive search in the response received from the exchange for one of the following keywords:
-
-
- * ``cloudflare``
- * ``incapsula``
- * ``overload``
- * ``ddos``
-
 RequestTimeout
---------------
+~~~~~~~~~~~~~~
 
 This exception is raised when the connection with the exchange fails or data is not fully received in a specified amount of time. This is controlled by the ``timeout`` option. When a ``RequestTimeout`` is raised, the user doesn't know the outcome of a request (whether it was accepted by the exchange server or not).
 
@@ -7189,7 +7342,7 @@ Thus it's advised to handle this type of exception in the following manner:
   * if the order is not ``'open'`` the user should ``fetchBalance()`` to check if the balance has changed since the order was created on the first run and then was filled and closed by the time of the second check.
 
 ExchangeNotAvailable
---------------------
+~~~~~~~~~~~~~~~~~~~~
 
 This type of exception is thrown when the underlying exchange is unreachable.
 
@@ -7206,7 +7359,7 @@ The ccxt library also throws this error if it detects any of the following keywo
  * ``maintenancing``
 
 InvalidNonce
-------------
+~~~~~~~~~~~~
 
 Raised when your nonce is less than the previous nonce used with your keypair, as described in the :ref:`Authentication <authentication>` section. This type of exception is thrown in these cases (in order of precedence for checking):
 

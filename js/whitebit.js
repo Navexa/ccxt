@@ -3,7 +3,8 @@
 //  ---------------------------------------------------------------------------
 
 const Exchange = require ('./base/Exchange');
-const { ExchangeNotAvailable, ExchangeError, DDoSProtection, BadSymbol, InvalidOrder, ArgumentsRequired, AuthenticationError, OrderNotFound, PermissionDenied, InsufficientFunds, BadRequest } = require ('./base/errors');
+const { ExchangeNotAvailable, ExchangeError, DDoSProtection, BadSymbol, InvalidOrder, ArgumentsRequired, AuthenticationError, OrderNotFound, PermissionDenied, InsufficientFunds, BadRequest, NotSupported } = require ('./base/errors');
+const { TICK_SIZE } = require ('./base/functions/number');
 const Precise = require ('./base/Precise');
 
 //  ---------------------------------------------------------------------------
@@ -23,7 +24,9 @@ module.exports = class whitebit extends Exchange {
                 'swap': false,
                 'future': false,
                 'option': false,
+                'cancelAllOrders': false,
                 'cancelOrder': true,
+                'cancelOrders': false,
                 'createDepositAddress': undefined,
                 'createLimitOrder': undefined,
                 'createMarketOrder': undefined,
@@ -36,18 +39,23 @@ module.exports = class whitebit extends Exchange {
                 'fetchBidsAsks': undefined,
                 'fetchClosedOrders': true,
                 'fetchCurrencies': true,
+                'fetchDeposit': true,
                 'fetchDepositAddress': true,
+                'fetchDeposits': true,
                 'fetchFundingHistory': false,
                 'fetchFundingRate': false,
                 'fetchFundingRateHistory': false,
                 'fetchFundingRates': false,
                 'fetchIndexOHLCV': false,
+                'fetchMarginMode': false,
                 'fetchMarkets': true,
                 'fetchMarkOHLCV': false,
                 'fetchOHLCV': true,
+                'fetchOpenInterestHistory': false,
                 'fetchOpenOrders': true,
                 'fetchOrderBook': true,
                 'fetchOrderTrades': true,
+                'fetchPositionMode': false,
                 'fetchPremiumIndexOHLCV': false,
                 'fetchTicker': true,
                 'fetchTickers': true,
@@ -56,6 +64,7 @@ module.exports = class whitebit extends Exchange {
                 'fetchTradingFee': false,
                 'fetchTradingFees': true,
                 'fetchTransactionFees': true,
+                'setLeverage': true,
                 'transfer': true,
                 'withdraw': true,
             },
@@ -153,6 +162,7 @@ module.exports = class whitebit extends Exchange {
                     },
                     'private': {
                         'post': [
+                            'collateral-account/leverage',
                             'main-account/address',
                             'main-account/balance',
                             'main-account/create-new-address',
@@ -176,6 +186,7 @@ module.exports = class whitebit extends Exchange {
                             'order/stop_market',
                             'order/cancel',
                             'orders',
+                            'profile/websocket_token',
                         ],
                     },
                 },
@@ -200,6 +211,7 @@ module.exports = class whitebit extends Exchange {
                     'fillTransferResponseFromRequest': true,
                 },
             },
+            'precisionMode': TICK_SIZE,
             'exceptions': {
                 'exact': {
                     'Unauthorized request.': AuthenticationError, // {"code":10,"message":"Unauthorized request."}
@@ -226,6 +238,13 @@ module.exports = class whitebit extends Exchange {
     }
 
     async fetchMarkets (params = {}) {
+        /**
+         * @method
+         * @name whitebit#fetchMarkets
+         * @description retrieves data on all markets for whitebit
+         * @param {dict} params extra parameters specific to the exchange api endpoint
+         * @returns {[dict]} an array of objects representing market data
+         */
         const response = await this.v2PublicGetMarkets (params);
         //
         //    {
@@ -250,7 +269,7 @@ module.exports = class whitebit extends Exchange {
         //        ]
         //    }
         //
-        const markets = this.safeValue (response, 'result');
+        const markets = this.safeValue (response, 'result', []);
         const result = [];
         for (let i = 0; i < markets.length; i++) {
             const market = markets[i];
@@ -288,8 +307,8 @@ module.exports = class whitebit extends Exchange {
                 'strike': undefined,
                 'optionType': undefined,
                 'precision': {
-                    'amount': this.safeInteger (market, 'stockPrec'),
-                    'price': this.safeInteger (market, 'moneyPrec'),
+                    'amount': this.parseNumber (this.parsePrecision (this.safeString (market, 'stockPrec'))),
+                    'price': this.parseNumber (this.parsePrecision (this.safeString (market, 'moneyPrec'))),
                 },
                 'limits': {
                     'leverage': {
@@ -317,6 +336,13 @@ module.exports = class whitebit extends Exchange {
     }
 
     async fetchCurrencies (params = {}) {
+        /**
+         * @method
+         * @name whitebit#fetchCurrencies
+         * @description fetches all available currencies on an exchange
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {dict} an associative dictionary of currencies
+         */
         const response = await this.v4PublicGetAssets (params);
         //
         //      "BTC": {
@@ -369,6 +395,14 @@ module.exports = class whitebit extends Exchange {
     }
 
     async fetchTransactionFees (codes = undefined, params = {}) {
+        /**
+         * @method
+         * @name whitebit#fetchTransactionFees
+         * @description fetch transaction fees
+         * @param {[str]|undefined} codes not used by fetchTransactionFees ()
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {dict} a list of [fee structures]{@link https://docs.ccxt.com/en/latest/manual.html#fee-structure}
+         */
         await this.loadMarkets ();
         const response = await this.v4PublicGetFee (params);
         //
@@ -416,6 +450,13 @@ module.exports = class whitebit extends Exchange {
     }
 
     async fetchTradingFees (params = {}) {
+        /**
+         * @method
+         * @name whitebit#fetchTradingFees
+         * @description fetch the trading fees for multiple markets
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {dict} a dictionary of [fee structures]{@link https://docs.ccxt.com/en/latest/manual.html#fee-structure} indexed by market symbols
+         */
         const response = await this.v4PublicGetAssets (params);
         //
         //      {
@@ -456,6 +497,14 @@ module.exports = class whitebit extends Exchange {
     }
 
     async fetchTicker (symbol, params = {}) {
+        /**
+         * @method
+         * @name whitebit#fetchTicker
+         * @description fetches a price ticker, a statistical calculation with the information calculated over the past 24 hours for a specific market
+         * @param {str} symbol unified symbol of the market to fetch the ticker for
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {dict} a [ticker structure]{@link https://docs.ccxt.com/en/latest/manual.html#ticker-structure}
+         */
         await this.loadMarkets ();
         const market = this.market (symbol);
         const request = {
@@ -534,10 +583,18 @@ module.exports = class whitebit extends Exchange {
             'baseVolume': this.safeString2 (ticker, 'base_volume', 'volume'),
             'quoteVolume': this.safeString2 (ticker, 'quote_volume', 'deal'),
             'info': ticker,
-        }, market, false);
+        }, market);
     }
 
     async fetchTickers (symbols = undefined, params = {}) {
+        /**
+         * @method
+         * @name whitebit#fetchTickers
+         * @description fetches price tickers for multiple markets, statistical calculations with the information calculated over the past 24 hours each market
+         * @param {[str]|undefined} symbols unified symbols of the markets to fetch the ticker for, all market tickers are returned if not assigned
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {dict} an array of [ticker structures]{@link https://docs.ccxt.com/en/latest/manual.html#ticker-structure}
+         */
         await this.loadMarkets ();
         const response = await this.v4PublicGetTicker (params);
         //
@@ -564,6 +621,15 @@ module.exports = class whitebit extends Exchange {
     }
 
     async fetchOrderBook (symbol, limit = undefined, params = {}) {
+        /**
+         * @method
+         * @name whitebit#fetchOrderBook
+         * @description fetches information on open orders with bid (buy) and ask (sell) prices, volumes and other data
+         * @param {str} symbol unified symbol of the market to fetch the order book for
+         * @param {int|undefined} limit the maximum amount of order book entries to return
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {dict} A dictionary of [order book structures]{@link https://docs.ccxt.com/en/latest/manual.html#order-book-structure} indexed by market symbols
+         */
         await this.loadMarkets ();
         const market = this.market (symbol);
         const request = {
@@ -592,11 +658,21 @@ module.exports = class whitebit extends Exchange {
         //          ]
         //      }
         //
-        const timestamp = this.safeString (response, 'timestamp');
+        const timestamp = this.safeInteger (response, 'timestamp');
         return this.parseOrderBook (response, symbol, timestamp);
     }
 
     async fetchTrades (symbol, since = undefined, limit = undefined, params = {}) {
+        /**
+         * @method
+         * @name whitebit#fetchTrades
+         * @description get the list of most recent trades for a particular symbol
+         * @param {str} symbol unified symbol of the market to fetch trades for
+         * @param {int|undefined} since timestamp in ms of the earliest trade to fetch
+         * @param {int|undefined} limit the maximum amount of trades to fetch
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {[dict]} a list of [trade structures]{@link https://docs.ccxt.com/en/latest/manual.html?#public-trades}
+         */
         await this.loadMarkets ();
         const market = this.market (symbol);
         const request = {
@@ -618,8 +694,84 @@ module.exports = class whitebit extends Exchange {
         return this.parseTrades (response, market, since, limit);
     }
 
+    async fetchMyTrades (symbol = undefined, since = undefined, limit = undefined, params = {}) {
+        /**
+         * @method
+         * @name whitebit#fetchMyTrades
+         * @description fetch all trades made by the user
+         * @param {str} symbol unified symbol of the market to fetch trades for
+         * @param {int|undefined} since timestamp in ms of the earliest trade to fetch
+         * @param {int|undefined} limit the maximum amount of trades to fetch
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {[dict]} a list of [trade structures]{@link https://docs.ccxt.com/en/latest/manual.html?#public-trades}
+         */
+        await this.loadMarkets ();
+        let market = undefined;
+        const request = {};
+        if (symbol !== undefined) {
+            market = this.market (symbol);
+            request['market'] = market['id'];
+        }
+        const response = await this.v4PrivatePostTradeAccountExecutedHistory (this.extend (request, params));
+        //
+        // when no symbol is provided
+        //
+        //   {
+        //       "USDC_USDT":[
+        //          {
+        //             "id":"1343815269",
+        //             "clientOrderId":"",
+        //             "time":"1641051917.532965",
+        //             "side":"sell",
+        //             "role":"2",
+        //             "amount":"9.986",
+        //             "price":"0.9995",
+        //             "deal":"9.981007",
+        //             "fee":"0.009981007",
+        //             "orderId":"58166729555"
+        //          },
+        //       ]
+        //   }
+        //
+        // when a symbol is provided
+        //
+        //     [
+        //         {
+        //             'id': 1343815269,
+        //             'clientOrderId': '',
+        //             'time': 1641051917.532965,
+        //             'side': 'sell',
+        //             'role': 2,
+        //             'amount': '9.986',
+        //             'price': '0.9995',
+        //             'deal': '9.981007',
+        //             'fee': '0.009981007',
+        //             'orderId': 58166729555,
+        //         },
+        //     ]
+        //
+        if (Array.isArray (response)) {
+            return this.parseTrades (response, market, since, limit);
+        } else {
+            let results = [];
+            const keys = Object.keys (response);
+            for (let i = 0; i < keys.length; i++) {
+                const marketId = keys[i];
+                const market = this.safeMarket (marketId, undefined, '_');
+                const rawTrades = this.safeValue (response, marketId, []);
+                const parsed = this.parseTrades (rawTrades, market, since, limit);
+                results = this.arrayConcat (results, parsed);
+            }
+            results = this.sortBy2 (results, 'timestamp', 'id');
+            const tail = (since === undefined);
+            return this.filterBySinceLimit (results, since, limit, 'timestamp', tail);
+        }
+    }
+
     parseTrade (trade, market = undefined) {
+        //
         // fetchTradesV4
+        //
         //     {
         //       "tradeID": 158056419,
         //       "price": "9186.13",
@@ -627,7 +779,7 @@ module.exports = class whitebit extends Exchange {
         //       "base_volume": "9186.13",
         //       "trade_timestamp": 1594391747,
         //       "type": "sell"
-        //     },
+        //     }
         //
         // orderTrades (v4Private)
         //
@@ -643,14 +795,30 @@ module.exports = class whitebit extends Exchange {
         //         "deal": "0.00419198" // amount in money
         //     }
         //
+        // fetchMyTrades
+        //
+        //      {
+        //          'id': 1343815269,
+        //          'clientOrderId': '',
+        //          'time': 1641051917.532965,
+        //          'side': 'sell',
+        //          'role': 2,
+        //          'amount': '9.986',
+        //          'price': '0.9995',
+        //          'deal': '9.981007',
+        //          'fee': '0.009981007',
+        //          'orderId': 58166729555,
+        //      }
+        //
+        market = this.safeMarket (undefined, market);
         const timestamp = this.safeTimestamp2 (trade, 'time', 'trade_timestamp');
-        const orderId = this.safeString (trade, 'dealOrderId');
+        const orderId = this.safeString2 (trade, 'dealOrderId', 'orderId');
         const cost = this.safeString (trade, 'deal');
         const price = this.safeString (trade, 'price');
         const amount = this.safeString2 (trade, 'amount', 'base_volume');
         const id = this.safeString2 (trade, 'id', 'tradeID');
-        const side = this.safeString (trade, 'type');
-        const symbol = this.safeSymbol (undefined, market);
+        const side = this.safeString2 (trade, 'type', 'side');
+        const symbol = market['symbol'];
         const role = this.safeInteger (trade, 'role');
         let takerOrMaker = undefined;
         if (role !== undefined) {
@@ -659,11 +827,9 @@ module.exports = class whitebit extends Exchange {
         let fee = undefined;
         const feeCost = this.safeString (trade, 'fee');
         if (feeCost !== undefined) {
-            const safeMarket = this.safeMarket (undefined, market);
-            const quote = safeMarket['quote'];
             fee = {
                 'cost': feeCost,
-                'currency': quote,
+                'currency': market['quote'],
             };
         }
         return this.safeTrade ({
@@ -684,6 +850,17 @@ module.exports = class whitebit extends Exchange {
     }
 
     async fetchOHLCV (symbol, timeframe = '1m', since = undefined, limit = undefined, params = {}) {
+        /**
+         * @method
+         * @name whitebit#fetchOHLCV
+         * @description fetches historical candlestick data containing the open, high, low, and close price, and the volume of a market
+         * @param {str} symbol unified symbol of the market to fetch OHLCV data for
+         * @param {str} timeframe the length of time each candle represents
+         * @param {int|undefined} since timestamp in ms of the earliest candle to fetch
+         * @param {int|undefined} limit the maximum amount of candles to fetch
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {[[int]]} A list of candles ordered as timestamp, open, high, low, close, volume
+         */
         await this.loadMarkets ();
         const market = this.market (symbol);
         const request = {
@@ -744,6 +921,13 @@ module.exports = class whitebit extends Exchange {
     }
 
     async fetchStatus (params = {}) {
+        /**
+         * @method
+         * @name whitebit#fetchStatus
+         * @description the latest known information on the availability of the exchange API
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {dict} a [status structure]{@link https://docs.ccxt.com/en/latest/manual.html#exchange-status-structure}
+         */
         const response = await this.v4PublicGetPing (params);
         //
         //      [
@@ -753,7 +937,7 @@ module.exports = class whitebit extends Exchange {
         const status = this.safeString (response, 0);
         return {
             'status': (status === 'pong') ? 'ok' : status,
-            'updated': this.milliseconds (),
+            'updated': undefined,
             'eta': undefined,
             'url': undefined,
             'info': response,
@@ -761,6 +945,13 @@ module.exports = class whitebit extends Exchange {
     }
 
     async fetchTime (params = {}) {
+        /**
+         * @method
+         * @name whitebit#fetchTime
+         * @description fetches the current integer timestamp in milliseconds from the exchange server
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {int} the current integer timestamp in milliseconds from the exchange server
+         */
         const response = await this.v4PublicGetTime (params);
         //
         //     {
@@ -771,6 +962,18 @@ module.exports = class whitebit extends Exchange {
     }
 
     async createOrder (symbol, type, side, amount, price = undefined, params = {}) {
+        /**
+         * @method
+         * @name whitebit#createOrder
+         * @description create a trade order
+         * @param {str} symbol unified symbol of the market to create an order in
+         * @param {str} type 'market' or 'limit'
+         * @param {str} side 'buy' or 'sell'
+         * @param {float} amount how much of currency you want to trade in units of base currency
+         * @param {float|undefined} price the price at which the order is to be fullfilled, in units of the quote currency, ignored in market orders
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {dict} an [order structure]{@link https://docs.ccxt.com/en/latest/manual.html#order-structure}
+         */
         let method = undefined;
         await this.loadMarkets ();
         const market = this.market (symbol);
@@ -834,6 +1037,15 @@ module.exports = class whitebit extends Exchange {
     }
 
     async cancelOrder (id, symbol = undefined, params = {}) {
+        /**
+         * @method
+         * @name whitebit#cancelOrder
+         * @description cancels an open order
+         * @param {str} id order id
+         * @param {str} symbol unified symbol of the market the order was made in
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {dict} An [order structure]{@link https://docs.ccxt.com/en/latest/manual.html#order-structure}
+         */
         if (symbol === undefined) {
             throw new ArgumentsRequired (this.id + ' cancelOrder() requires a symbol argument');
         }
@@ -862,6 +1074,13 @@ module.exports = class whitebit extends Exchange {
     }
 
     async fetchBalance (params = {}) {
+        /**
+         * @method
+         * @name whitebit#fetchBalance
+         * @description query for balance and get the amount of funds available for trading or funds locked in orders
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {dict} a [balance structure]{@link https://docs.ccxt.com/en/latest/manual.html?#balance-structure}
+         */
         await this.loadMarkets ();
         const response = await this.v4PrivatePostTradeAccountBalance (params);
         //
@@ -874,6 +1093,16 @@ module.exports = class whitebit extends Exchange {
     }
 
     async fetchOpenOrders (symbol = undefined, since = undefined, limit = undefined, params = {}) {
+        /**
+         * @method
+         * @name whitebit#fetchOpenOrders
+         * @description fetch all unfilled currently open orders
+         * @param {str} symbol unified market symbol
+         * @param {int|undefined} since the earliest time in ms to fetch open orders for
+         * @param {int|undefined} limit the maximum number of  open orders structures to retrieve
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {[dict]} a list of [order structures]{@link https://docs.ccxt.com/en/latest/manual.html#order-structure}
+         */
         if (symbol === undefined) {
             throw new ArgumentsRequired (this.id + ' fetchOpenOrders() requires a symbol argument');
         }
@@ -910,6 +1139,16 @@ module.exports = class whitebit extends Exchange {
     }
 
     async fetchClosedOrders (symbol = undefined, since = undefined, limit = undefined, params = {}) {
+        /**
+         * @method
+         * @name whitebit#fetchClosedOrders
+         * @description fetches information on multiple closed orders made by the user
+         * @param {str|undefined} symbol unified market symbol of the market orders were made in
+         * @param {int|undefined} since the earliest time in ms to fetch orders for
+         * @param {int|undefined} limit the maximum number of  orde structures to retrieve
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {[dict]} a list of [order structures]{@link https://docs.ccxt.com/en/latest/manual.html#order-structure
+         */
         await this.loadMarkets ();
         const request = {};
         let market = undefined;
@@ -1002,10 +1241,7 @@ module.exports = class whitebit extends Exchange {
         const side = this.safeString (order, 'side');
         const filled = this.safeString (order, 'dealStock');
         const remaining = this.safeString (order, 'left');
-        let clientOrderId = this.safeString (order, 'clientOrderId');
-        if (clientOrderId === '') {
-            clientOrderId = undefined;
-        }
+        const clientOrderId = this.safeString (order, 'clientOrderId');
         let price = this.safeString (order, 'price');
         const stopPrice = this.safeString (order, 'activation_price');
         const orderId = this.safeString2 (order, 'orderId', 'id');
@@ -1062,6 +1298,17 @@ module.exports = class whitebit extends Exchange {
     }
 
     async fetchOrderTrades (id, symbol = undefined, since = undefined, limit = undefined, params = {}) {
+        /**
+         * @method
+         * @name whitebit#fetchOrderTrades
+         * @description fetch all the trades made from a single order
+         * @param {str} id order id
+         * @param {str|undefined} symbol unified market symbol
+         * @param {int|undefined} since the earliest time in ms to fetch trades for
+         * @param {int|undefined} limit the maximum number of trades to retrieve
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {[dict]} a list of [trade structures]{@link https://docs.ccxt.com/en/latest/manual.html#trade-structure}
+         */
         await this.loadMarkets ();
         const request = {
             'orderId': parseInt (id),
@@ -1099,6 +1346,14 @@ module.exports = class whitebit extends Exchange {
     }
 
     async fetchDepositAddress (code, params = {}) {
+        /**
+         * @method
+         * @name whitebit#fetchDepositAddress
+         * @description fetch the deposit address for a currency associated with this account
+         * @param {str} code unified currency code
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {dict} an [address structure]{@link https://docs.ccxt.com/en/latest/manual.html#address-structure}
+         */
         await this.loadMarkets ();
         const currency = this.currency (code);
         const request = {
@@ -1163,7 +1418,44 @@ module.exports = class whitebit extends Exchange {
         };
     }
 
+    async setLeverage (leverage, symbol = undefined, params = {}) {
+        /**
+         * @method
+         * @name whitebit#setLeverage
+         * @description set the level of leverage for a market
+         * @param {float} leverage the rate of leverage
+         * @param {str} symbol unified market symbol
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {dict} response from the exchange
+         */
+        await this.loadMarkets ();
+        if (symbol !== undefined) {
+            throw new NotSupported (this.id + ' setLeverage() does not allow to set per symbol');
+        }
+        if ((leverage < 1) || (leverage > 20)) {
+            throw new BadRequest (this.id + ' setLeverage() leverage should be between 1 and 20');
+        }
+        const request = {
+            'leverage': leverage,
+        };
+        return await this.v4PrivatePostCollateralAccountLeverage (this.extend (request, params));
+        //     {
+        //         "leverage": 5
+        //     }
+    }
+
     async transfer (code, amount, fromAccount, toAccount, params = {}) {
+        /**
+         * @method
+         * @name whitebit#transfer
+         * @description transfer currency internally between wallets on the same account
+         * @param {str} code unified currency code
+         * @param {float} amount amount to transfer
+         * @param {str} fromAccount account to transfer from
+         * @param {str} toAccount account to transfer to
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {dict} a [transfer structure]{@link https://docs.ccxt.com/en/latest/manual.html#transfer-structure}
+         */
         await this.loadMarkets ();
         const currency = this.currency (code);
         const accountsByType = this.safeValue (this.options, 'accountsByType');
@@ -1216,6 +1508,17 @@ module.exports = class whitebit extends Exchange {
     }
 
     async withdraw (code, amount, address, tag = undefined, params = {}) {
+        /**
+         * @method
+         * @name whitebit#withdraw
+         * @description make a withdrawal
+         * @param {str} code unified currency code
+         * @param {float} amount the amount to withdraw
+         * @param {str} address the address to withdraw to
+         * @param {str|undefined} tag
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {dict} a [transaction structure]{@link https://docs.ccxt.com/en/latest/manual.html#transaction-structure}
+         */
         await this.loadMarkets ();
         const currency = this.currency (code); // check if it has canDeposit
         const request = {
@@ -1234,7 +1537,7 @@ module.exports = class whitebit extends Exchange {
         if (this.isFiat (code)) {
             const provider = this.safeValue (params, 'provider');
             if (provider === undefined) {
-                throw new ArgumentsRequired (this.id + ' fetchDepositAddress() requires a provider when the ticker is fiat');
+                throw new ArgumentsRequired (this.id + ' withdraw() requires a provider when the ticker is fiat');
             }
             request['provider'] = provider;
         }
@@ -1250,32 +1553,218 @@ module.exports = class whitebit extends Exchange {
 
     parseTransaction (transaction, currency = undefined) {
         //
-        // withdraw
-        //
-        //     []
+        //     {
+        //         "address": "3ApEASLcrQtZpg1TsssFgYF5V5YQJAKvuE",                                              // deposit address
+        //         "uniqueId": null,                                                                             // unique Id of deposit
+        //         "createdAt": 1593437922,                                                                      // timestamp of deposit
+        //         "currency": "Bitcoin",                                                                        // deposit currency
+        //         "ticker": "BTC",                                                                              // deposit currency ticker
+        //         "method": 1,                                                                                  // called method 1 - deposit, 2 - withdraw
+        //         "amount": "0.0006",                                                                           // amount of deposit
+        //         "description": "",                                                                            // deposit description
+        //         "memo": "",                                                                                   // deposit memo
+        //         "fee": "0",                                                                                   // deposit fee
+        //         "status": 15,                                                                                 // transactions status
+        //         "network": null,                                                                              // if currency is multinetwork
+        //         "transactionHash": "a275a514013e4e0f927fd0d1bed215e7f6f2c4c6ce762836fe135ec22529d886",        // deposit transaction hash
+        //         "details": {
+        //             "partial": {                                                                              // details about partially successful withdrawals
+        //                 "requestAmount": "50000",                                                             // requested withdrawal amount
+        //                 "processedAmount": "39000",                                                           // processed withdrawal amount
+        //                 "processedFee": "273",                                                                // fee for processed withdrawal amount
+        //                 "normalizeTransaction": ""                                                            // deposit id
+        //             }
+        //         },
+        //         "confirmations": {                                                                            // if transaction status == 15 you can see this object
+        //             "actual": 1,                                                                              // current block confirmations
+        //             "required": 2                                                                             // required block confirmation for successful deposit
+        //         }
+        //     }
         //
         currency = this.safeCurrency (undefined, currency);
+        const address = this.safeString (transaction, 'address');
+        const timestamp = this.safeTimestamp (transaction, 'createdAt');
+        const currencyId = this.safeString (transaction, 'ticker');
+        const status = this.safeString (transaction, 'status');
+        const method = this.safeString (transaction, 'method');
         return {
-            'id': undefined,
-            'txid': undefined,
-            'timestamp': undefined,
-            'datetime': undefined,
-            'network': undefined,
-            'addressFrom': undefined,
-            'address': undefined,
-            'addressTo': undefined,
-            'amount': undefined,
-            'type': undefined,
-            'currency': currency['code'],
-            'status': undefined,
+            'id': this.safeString (transaction, 'uniqueId'),
+            'txid': this.safeString (transaction, 'transactionHash'),
+            'timestamp': timestamp,
+            'datetime': this.iso8601 (timestamp),
+            'network': this.safeString (transaction, 'network'),
+            'addressFrom': (method === '1') ? address : undefined,
+            'address': address,
+            'addressTo': (method === '2') ? address : undefined,
+            'amount': this.safeNumber (transaction, 'amount'),
+            'type': (method === '1') ? 'deposit' : 'withdrawal',
+            'currency': this.safeCurrencyCode (currencyId, currency),
+            'status': this.parseTransactionStatus (status),
             'updated': undefined,
             'tagFrom': undefined,
             'tag': undefined,
             'tagTo': undefined,
-            'comment': undefined,
-            'fee': undefined,
+            'comment': this.safeString (transaction, 'description'),
+            'fee': {
+                'cost': this.safeNumber (transaction, 'fee'),
+                'currency': this.safeCurrencyCode (currencyId, currency),
+            },
             'info': transaction,
         };
+    }
+
+    parseTransactionStatus (status) {
+        const statuses = {
+            '1': 'pending',
+            '2': 'pending',
+            '3': 'ok',
+            '4': 'canceled',
+            '5': 'pending',
+            '6': 'pending',
+            '7': 'ok',
+            '9': 'canceled',
+            '10': 'pending',
+            '11': 'pending',
+            '12': 'pending',
+            '13': 'pending',
+            '14': 'pending',
+            '15': 'pending',
+            '16': 'pending',
+            '17': 'pending',
+        };
+        return this.safeString (statuses, status, status);
+    }
+
+    async fetchDeposit (id, code = undefined, params = {}) {
+        /**
+         * @method
+         * @name whitebit#fetchDeposit
+         * @description fetch information on a deposit
+         * @param {str} id deposit id
+         * @param {str|undefined} code not used by whitebit fetchDeposit ()
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {dict} a [transaction structure]{@link https://docs.ccxt.com/en/latest/manual.html#transaction-structure}
+         */
+        await this.loadMarkets ();
+        let currency = undefined;
+        const request = {
+            'transactionMethod': 1,
+            'uniqueId': id,
+            'limit': 1,
+            'offset': 0,
+        };
+        if (code !== undefined) {
+            currency = this.currency (code);
+            request['ticker'] = currency['id'];
+        }
+        const response = await this.v4PrivatePostMainAccountHistory (this.extend (request, params));
+        //
+        //     {
+        //         "limit": 100,
+        //         "offset": 0,
+        //         "records": [
+        //             {
+        //                 "address": "3ApEASLcrQtZpg1TsssFgYF5V5YQJAKvuE",                                              // deposit address
+        //                 "uniqueId": null,                                                                             // unique Id of deposit
+        //                 "createdAt": 1593437922,                                                                      // timestamp of deposit
+        //                 "currency": "Bitcoin",                                                                        // deposit currency
+        //                 "ticker": "BTC",                                                                              // deposit currency ticker
+        //                 "method": 1,                                                                                  // called method 1 - deposit, 2 - withdraw
+        //                 "amount": "0.0006",                                                                           // amount of deposit
+        //                 "description": "",                                                                            // deposit description
+        //                 "memo": "",                                                                                   // deposit memo
+        //                 "fee": "0",                                                                                   // deposit fee
+        //                 "status": 15,                                                                                 // transactions status
+        //                 "network": null,                                                                              // if currency is multinetwork
+        //                 "transactionHash": "a275a514013e4e0f927fd0d1bed215e7f6f2c4c6ce762836fe135ec22529d886",        // deposit transaction hash
+        //                 "details": {
+        //                     "partial": {                                                                              // details about partially successful withdrawals
+        //                         "requestAmount": "50000",                                                             // requested withdrawal amount
+        //                         "processedAmount": "39000",                                                           // processed withdrawal amount
+        //                         "processedFee": "273",                                                                // fee for processed withdrawal amount
+        //                         "normalizeTransaction": ""                                                            // deposit id
+        //                     }
+        //                 },
+        //                 "confirmations": {                                                                            // if transaction status == 15 you can see this object
+        //                     "actual": 1,                                                                              // current block confirmations
+        //                     "required": 2                                                                             // required block confirmation for successful deposit
+        //                 }
+        //             },
+        //             {...},
+        //         ],
+        //         "total": 300                                                                                             // total number of  transactions, use this for calculating ‘limit’ and ‘offset'
+        //     }
+        //
+        const records = this.safeValue (response, 'records', []);
+        const first = this.safeValue (records, 0, {});
+        return this.parseTransaction (first, currency);
+    }
+
+    async fetchDeposits (code = undefined, since = undefined, limit = undefined, params = {}) {
+        /**
+         * @method
+         * @name whitebit#fetchDeposits
+         * @description fetch all deposits made to an account
+         * @param {str|undefined} code unified currency code
+         * @param {int|undefined} since the earliest time in ms to fetch deposits for
+         * @param {int|undefined} limit the maximum number of deposits structures to retrieve
+         * @param {dict} params extra parameters specific to the whitebit api endpoint
+         * @returns {[dict]} a list of [transaction structures]{@link https://docs.ccxt.com/en/latest/manual.html#transaction-structure}
+         */
+        await this.loadMarkets ();
+        let currency = undefined;
+        const request = {
+            'transactionMethod': 1,
+            'limit': 100,
+            'offset': 0,
+        };
+        if (code !== undefined) {
+            currency = this.currency (code);
+            request['ticker'] = currency['id'];
+        }
+        if (limit !== undefined) {
+            request['limit'] = limit;
+        }
+        const response = await this.v4PrivatePostMainAccountHistory (this.extend (request, params));
+        //
+        //     {
+        //         "limit": 100,
+        //         "offset": 0,
+        //         "records": [
+        //             {
+        //                 "address": "3ApEASLcrQtZpg1TsssFgYF5V5YQJAKvuE",                                              // deposit address
+        //                 "uniqueId": null,                                                                             // unique Id of deposit
+        //                 "createdAt": 1593437922,                                                                      // timestamp of deposit
+        //                 "currency": "Bitcoin",                                                                        // deposit currency
+        //                 "ticker": "BTC",                                                                              // deposit currency ticker
+        //                 "method": 1,                                                                                  // called method 1 - deposit, 2 - withdraw
+        //                 "amount": "0.0006",                                                                           // amount of deposit
+        //                 "description": "",                                                                            // deposit description
+        //                 "memo": "",                                                                                   // deposit memo
+        //                 "fee": "0",                                                                                   // deposit fee
+        //                 "status": 15,                                                                                 // transactions status
+        //                 "network": null,                                                                              // if currency is multinetwork
+        //                 "transactionHash": "a275a514013e4e0f927fd0d1bed215e7f6f2c4c6ce762836fe135ec22529d886",        // deposit transaction hash
+        //                 "details": {
+        //                     "partial": {                                                                              // details about partially successful withdrawals
+        //                         "requestAmount": "50000",                                                             // requested withdrawal amount
+        //                         "processedAmount": "39000",                                                           // processed withdrawal amount
+        //                         "processedFee": "273",                                                                // fee for processed withdrawal amount
+        //                         "normalizeTransaction": ""                                                            // deposit id
+        //                     }
+        //                 },
+        //                 "confirmations": {                                                                            // if transaction status == 15 you can see this object
+        //                     "actual": 1,                                                                              // current block confirmations
+        //                     "required": 2                                                                             // required block confirmation for successful deposit
+        //                 }
+        //             },
+        //             {...},
+        //         ],
+        //         "total": 300                                                                                             // total number of  transactions, use this for calculating ‘limit’ and ‘offset'
+        //     }
+        //
+        const records = this.safeValue (response, 'records', []);
+        return this.parseTransactions (records, currency, since, limit);
     }
 
     isFiat (currency) {
