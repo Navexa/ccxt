@@ -47,6 +47,7 @@ module.exports = class coinspot extends Exchange {
                 'fetchMarkOHLCV': false,
                 'fetchOpenInterestHistory': false,
                 'fetchOrderBook': true,
+                'fetchOrders': true,
                 'fetchPosition': false,
                 'fetchPositionMode': false,
                 'fetchPositions': false,
@@ -208,6 +209,91 @@ module.exports = class coinspot extends Exchange {
         };
         const orderbook = await this.privatePostOrders (this.extend (request, params));
         return this.parseOrderBook (orderbook, symbol, undefined, 'buyorders', 'sellorders', 'rate', 'amount');
+    }
+
+    async fetchOrders() {
+        const response = await this.privatePostRoMyTransactions();
+        return this.parseOrders(response);
+    }
+
+    parseOrders(orders, market = undefined, since = undefined, limit = undefined, params = {}) {
+        //
+        //{
+        //   "status": "ok",
+        //   "buyorders": [],
+        //   "sellorders": []
+        // }
+        //
+
+        let result = [];
+        if (orders.status !== 'ok') {
+            return result;
+        }
+
+        if (orders['buyorders'] !== undefined) {
+            result = result.concat(orders['buyorders'].map(o => this.parseOrder(o, 'buy', market)));
+        }
+
+        if (orders['sellorders'] !== undefined) {
+            result = result.concat(orders['sellorders'].map(o => this.parseOrder(o, 'sell', market)));
+        }
+
+        result.sort((a, b) => a.timestamp - b.timestamp);
+        return result;
+    }
+
+    parseOrder(order, side, market = undefined) {
+        //
+        // {
+        //   "otc": false,
+        //   "market": "LTC/BTC",
+        //   "amount": "2.026941",
+        //   "total": "0.024015480739739997",
+        //   "created": "2017-10-07T01:03:33.927Z",
+        //   "audfeeExGst": "1.23262626",
+        //   "audGst": "0.12326263",
+        //   "audtotal": "134.23"
+        // }
+        //
+
+        const symbol = this.safeSymbol(order.market, market, '/')
+        const amount = this.safeString(order, 'amount');
+        const timestamp = this.parse8601(this.safeString(order, 'created'));
+        const cost = this.safeString(order, 'audtotal');
+        const totalNum = Number(cost);
+        const totalBase = this.safeString(order, 'total');
+        const fee = this.safeString(order, 'audfeeExGst');
+        const gst = this.safeString(order, 'audGst');
+        const totalFee = Number(fee) + Number(gst);
+        const price = (side === 'buy' ? (totalNum - totalFee) : (totalNum + totalFee)) / amount;
+
+        return this.safeOrder({
+            'info': order,
+            'id': undefined,
+            'clientOrderId': undefined,
+            'timestamp': timestamp,
+            'datetime': this.iso8601(timestamp),
+            'lastTradeTimestamp': undefined,
+            'symbol': symbol,
+            'type': undefined,
+            'timeInForce': undefined,
+            'postOnly': undefined,
+            'side': side,
+            'price': price,
+            'stopPrice': undefined,
+            'amount': amount,
+            'cost': totalBase,
+            'average': undefined,
+            'filled': amount,
+            'remaining': undefined,
+            'status': 'closed',
+            'fee': totalFee,
+            'fees': {
+                'fee': Number(fee),
+                'gst': Number(gst)
+            },
+            'trades': undefined,
+        }, market);
     }
 
     parseTicker (ticker, market = undefined) {
