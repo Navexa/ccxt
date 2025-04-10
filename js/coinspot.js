@@ -2,18 +2,17 @@
 
 //  ---------------------------------------------------------------------------
 
-const Exchange = require ('./base/Exchange');
-const { ExchangeError, ArgumentsRequired } = require ('./base/errors');
-const { TICK_SIZE } = require ('./base/functions/number');
+const Exchange = require('./base/Exchange');
+const { ExchangeError, ArgumentsRequired } = require('./base/errors');
 
 //  ---------------------------------------------------------------------------
 
 module.exports = class coinspot extends Exchange {
-    describe () {
-        return this.deepExtend (super.describe (), {
+    describe() {
+        return this.deepExtend(super.describe(), {
             'id': 'coinspot',
             'name': 'CoinSpot',
-            'countries': [ 'AU' ], // Australia
+            'countries': ['AU'], // Australia
             'rateLimit': 1000,
             'has': {
                 'CORS': undefined,
@@ -27,9 +26,6 @@ module.exports = class coinspot extends Exchange {
                 'createMarketOrder': undefined,
                 'createOrder': true,
                 'createReduceOnlyOrder': false,
-                'createStopLimitOrder': false,
-                'createStopMarketOrder': false,
-                'createStopOrder': false,
                 'fetchBalance': true,
                 'fetchBorrowRate': false,
                 'fetchBorrowRateHistories': false,
@@ -43,13 +39,10 @@ module.exports = class coinspot extends Exchange {
                 'fetchIndexOHLCV': false,
                 'fetchLeverage': false,
                 'fetchLeverageTiers': false,
-                'fetchMarginMode': false,
                 'fetchMarkOHLCV': false,
-                'fetchOpenInterestHistory': false,
                 'fetchOrderBook': true,
                 'fetchOrders': true,
                 'fetchPosition': false,
-                'fetchPositionMode': false,
                 'fetchPositions': false,
                 'fetchPositionsRisk': false,
                 'fetchPremiumIndexOHLCV': false,
@@ -129,50 +122,42 @@ module.exports = class coinspot extends Exchange {
             'options': {
                 'fetchBalance': 'private_post_my_balances',
             },
-            'precisionMode': TICK_SIZE,
         });
     }
 
-    parseBalance (response) {
+    parseBalance(response) {
         const result = { 'info': response };
-        const balances = this.safeValue2 (response, 'balance', 'balances');
-        if (Array.isArray (balances)) {
+        const balances = this.safeValue2(response, 'balance', 'balances');
+        if (Array.isArray(balances)) {
             for (let i = 0; i < balances.length; i++) {
                 const currencies = balances[i];
-                const currencyIds = Object.keys (currencies);
+                const currencyIds = Object.keys(currencies);
                 for (let j = 0; j < currencyIds.length; j++) {
                     const currencyId = currencyIds[j];
                     const balance = currencies[currencyId];
-                    const code = this.safeCurrencyCode (currencyId);
-                    const account = this.account ();
-                    account['total'] = this.safeString (balance, 'balance');
+                    const code = this.safeCurrencyCode(currencyId);
+                    const account = this.account();
+                    account['total'] = this.safeString(balance, 'balance');
                     result[code] = account;
                 }
             }
         } else {
-            const currencyIds = Object.keys (balances);
+            const currencyIds = Object.keys(balances);
             for (let i = 0; i < currencyIds.length; i++) {
                 const currencyId = currencyIds[i];
-                const code = this.safeCurrencyCode (currencyId);
-                const account = this.account ();
-                account['total'] = this.safeString (balances, currencyId);
+                const code = this.safeCurrencyCode(currencyId);
+                const account = this.account();
+                account['total'] = this.safeString(balances, currencyId);
                 result[code] = account;
             }
         }
-        return this.safeBalance (result);
+        return this.safeBalance(result);
     }
 
-    async fetchBalance (params = {}) {
-        /**
-         * @method
-         * @name coinspot#fetchBalance
-         * @description query for balance and get the amount of funds available for trading or funds locked in orders
-         * @param {dict} params extra parameters specific to the coinspot api endpoint
-         * @returns {dict} a [balance structure]{@link https://docs.ccxt.com/en/latest/manual.html?#balance-structure}
-         */
-        await this.loadMarkets ();
-        const method = this.safeString (this.options, 'fetchBalance', 'private_post_my_balances');
-        const response = await this[method] (params);
+    async fetchBalance(params = {}) {
+        await this.loadMarkets();
+        const method = this.safeString(this.options, 'fetchBalance', 'private_post_my_balances');
+        const response = await this[method](params);
         //
         // read-write api keys
         //
@@ -189,26 +174,17 @@ module.exports = class coinspot extends Exchange {
         //         ]
         //     }
         //
-        return this.parseBalance (response);
+        return this.parseBalance(response);
     }
 
-    async fetchOrderBook (symbol, limit = undefined, params = {}) {
-        /**
-         * @method
-         * @name coinspot#fetchOrderBook
-         * @description fetches information on open orders with bid (buy) and ask (sell) prices, volumes and other data
-         * @param {str} symbol unified symbol of the market to fetch the order book for
-         * @param {int|undefined} limit the maximum amount of order book entries to return
-         * @param {dict} params extra parameters specific to the coinspot api endpoint
-         * @returns {dict} A dictionary of [order book structures]{@link https://docs.ccxt.com/en/latest/manual.html#order-book-structure} indexed by market symbols
-         */
-        await this.loadMarkets ();
-        const market = this.market (symbol);
+    async fetchOrderBook(symbol, limit = undefined, params = {}) {
+        await this.loadMarkets();
+        const market = this.market(symbol);
         const request = {
             'cointype': market['id'],
         };
-        const orderbook = await this.privatePostOrders (this.extend (request, params));
-        return this.parseOrderBook (orderbook, symbol, undefined, 'buyorders', 'sellorders', 'rate', 'amount');
+        const orderbook = await this.privatePostOrders(this.extend(request, params));
+        return this.parseOrderBook(orderbook, symbol, undefined, 'buyorders', 'sellorders', 'rate', 'amount');
     }
 
     async fetchOrders() {
@@ -306,18 +282,18 @@ module.exports = class coinspot extends Exchange {
         //         }
         //     }
         //
-        const symbol = this.safeSymbol (undefined, market);
-        const timestamp = this.milliseconds ();
-        const last = this.safeString (ticker, 'last');
-        return this.safeTicker ({
+        const symbol = this.safeSymbol(undefined, market);
+        const timestamp = this.milliseconds();
+        const last = this.safeString(ticker, 'last');
+        return this.safeTicker({
             'symbol': symbol,
             'timestamp': timestamp,
-            'datetime': this.iso8601 (timestamp),
+            'datetime': this.iso8601(timestamp),
             'high': undefined,
             'low': undefined,
-            'bid': this.safeString (ticker, 'bid'),
+            'bid': this.safeString(ticker, 'bid'),
             'bidVolume': undefined,
-            'ask': this.safeString (ticker, 'ask'),
+            'ask': this.safeString(ticker, 'ask'),
             'askVolume': undefined,
             'vwap': undefined,
             'open': undefined,
@@ -330,24 +306,16 @@ module.exports = class coinspot extends Exchange {
             'baseVolume': undefined,
             'quoteVolume': undefined,
             'info': ticker,
-        }, market);
+        }, market, false);
     }
 
-    async fetchTicker (symbol, params = {}) {
-        /**
-         * @method
-         * @name coinspot#fetchTicker
-         * @description fetches a price ticker, a statistical calculation with the information calculated over the past 24 hours for a specific market
-         * @param {str} symbol unified symbol of the market to fetch the ticker for
-         * @param {dict} params extra parameters specific to the coinspot api endpoint
-         * @returns {dict} a [ticker structure]{@link https://docs.ccxt.com/en/latest/manual.html#ticker-structure}
-         */
-        await this.loadMarkets ();
-        const market = this.market (symbol);
-        const response = await this.publicGetLatest (params);
+    async fetchTicker(symbol, params = {}) {
+        await this.loadMarkets();
+        const market = this.market(symbol);
+        const response = await this.publicGetLatest(params);
         let id = market['id'];
-        id = id.toLowerCase ();
-        const prices = this.safeValue (response, 'prices');
+        id = id.toLowerCase();
+        const prices = this.safeValue(response, 'prices');
         //
         //     {
         //         "status":"ok",
@@ -360,27 +328,17 @@ module.exports = class coinspot extends Exchange {
         //         }
         //     }
         //
-        const ticker = this.safeValue (prices, id);
-        return this.parseTicker (ticker, market);
+        const ticker = this.safeValue(prices, id);
+        return this.parseTicker(ticker, market);
     }
 
-    async fetchTrades (symbol, since = undefined, limit = undefined, params = {}) {
-        /**
-         * @method
-         * @name coinspot#fetchTrades
-         * @description get the list of most recent trades for a particular symbol
-         * @param {str} symbol unified symbol of the market to fetch trades for
-         * @param {int|undefined} since timestamp in ms of the earliest trade to fetch
-         * @param {int|undefined} limit the maximum amount of trades to fetch
-         * @param {dict} params extra parameters specific to the coinspot api endpoint
-         * @returns {[dict]} a list of [trade structures]{@link https://docs.ccxt.com/en/latest/manual.html?#public-trades}
-         */
-        await this.loadMarkets ();
-        const market = this.market (symbol);
+    async fetchTrades(symbol, since = undefined, limit = undefined, params = {}) {
+        await this.loadMarkets();
+        const market = this.market(symbol);
         const request = {
             'cointype': market['id'],
         };
-        const response = await this.privatePostOrdersHistory (this.extend (request, params));
+        const response = await this.privatePostOrdersHistory(this.extend(request, params));
         //
         //     {
         //         "status":"ok",
@@ -389,11 +347,11 @@ module.exports = class coinspot extends Exchange {
         //         ],
         //     }
         //
-        const trades = this.safeValue (response, 'orders', []);
-        return this.parseTrades (trades, market, since, limit);
+        const trades = this.safeValue(response, 'orders', []);
+        return this.parseTrades(trades, market, since, limit);
     }
 
-    parseTrade (trade, market = undefined) {
+    parseTrade(trade, market = undefined) {
         //
         // public fetchTrades
         //
@@ -406,18 +364,18 @@ module.exports = class coinspot extends Exchange {
         //         "market":"BTC/AUD"
         //     }
         //
-        const priceString = this.safeString (trade, 'rate');
-        const amountString = this.safeString (trade, 'amount');
-        const costString = this.safeNumber (trade, 'total');
-        const timestamp = this.safeInteger (trade, 'solddate');
-        const marketId = this.safeString (trade, 'market');
-        const symbol = this.safeSymbol (marketId, market, '/');
-        return this.safeTrade ({
+        const priceString = this.safeString(trade, 'rate');
+        const amountString = this.safeString(trade, 'amount');
+        const costString = this.safeNumber(trade, 'total');
+        const timestamp = this.safeInteger(trade, 'solddate');
+        const marketId = this.safeString(trade, 'market');
+        const symbol = this.safeSymbol(marketId, market, '/');
+        return this.safeTrade({
             'info': trade,
             'id': undefined,
             'symbol': symbol,
             'timestamp': timestamp,
-            'datetime': this.iso8601 (timestamp),
+            'datetime': this.iso8601(timestamp),
             'order': undefined,
             'type': undefined,
             'side': undefined,
@@ -429,64 +387,43 @@ module.exports = class coinspot extends Exchange {
         }, market);
     }
 
-    async createOrder (symbol, type, side, amount, price = undefined, params = {}) {
-        /**
-         * @method
-         * @name coinspot#createOrder
-         * @description create a trade order
-         * @param {str} symbol unified symbol of the market to create an order in
-         * @param {str} type 'market' or 'limit'
-         * @param {str} side 'buy' or 'sell'
-         * @param {float} amount how much of currency you want to trade in units of base currency
-         * @param {float|undefined} price the price at which the order is to be fullfilled, in units of the quote currency, ignored in market orders
-         * @param {dict} params extra parameters specific to the coinspot api endpoint
-         * @returns {dict} an [order structure]{@link https://docs.ccxt.com/en/latest/manual.html#order-structure}
-         */
-        await this.loadMarkets ();
-        const method = 'privatePostMy' + this.capitalize (side);
+    async createOrder(symbol, type, side, amount, price = undefined, params = {}) {
+        await this.loadMarkets();
+        const method = 'privatePostMy' + this.capitalize(side);
         if (type === 'market') {
-            throw new ExchangeError (this.id + ' createOrder() allows limit orders only');
+            throw new ExchangeError(this.id + ' allows limit orders only');
         }
         const request = {
-            'cointype': this.marketId (symbol),
+            'cointype': this.marketId(symbol),
             'amount': amount,
             'rate': price,
         };
-        return await this[method] (this.extend (request, params));
+        return await this[method](this.extend(request, params));
     }
 
-    async cancelOrder (id, symbol = undefined, params = {}) {
-        /**
-         * @method
-         * @name coinspot#cancelOrder
-         * @description cancels an open order
-         * @param {str} id order id
-         * @param {str|undefined} symbol not used by coinspot cancelOrder ()
-         * @param {dict} params extra parameters specific to the coinspot api endpoint
-         * @returns {dict} An [order structure]{@link https://docs.ccxt.com/en/latest/manual.html#order-structure}
-         */
-        const side = this.safeString (params, 'side');
+    async cancelOrder(id, symbol = undefined, params = {}) {
+        const side = this.safeString(params, 'side');
         if (side !== 'buy' && side !== 'sell') {
-            throw new ArgumentsRequired (this.id + ' cancelOrder() requires a side parameter, "buy" or "sell"');
+            throw new ArgumentsRequired(this.id + ' cancelOrder() requires a side parameter, "buy" or "sell"');
         }
-        params = this.omit (params, 'side');
-        const method = 'privatePostMy' + this.capitalize (side) + 'Cancel';
+        params = this.omit(params, 'side');
+        const method = 'privatePostMy' + this.capitalize(side) + 'Cancel';
         const request = {
             'id': id,
         };
-        return await this[method] (this.extend (request, params));
+        return await this[method](this.extend(request, params));
     }
 
-    sign (path, api = 'public', method = 'GET', params = {}, headers = undefined, body = undefined) {
+    sign(path, api = 'public', method = 'GET', params = {}, headers = undefined, body = undefined) {
         const url = this.urls['api'][api] + '/' + path;
         if (api === 'private') {
-            this.checkRequiredCredentials ();
-            const nonce = this.nonce ();
-            body = this.json (this.extend ({ 'nonce': nonce }, params));
+            this.checkRequiredCredentials();
+            const nonce = this.nonce();
+            body = this.json(this.extend({ 'nonce': nonce }, params));
             headers = {
                 'Content-Type': 'application/json',
                 'key': this.apiKey,
-                'sign': this.hmac (this.encode (body), this.encode (this.secret), 'sha512'),
+                'sign': this.hmac(this.encode(body), this.encode(this.secret), 'sha512'),
             };
         }
         return { 'url': url, 'method': method, 'body': body, 'headers': headers };
