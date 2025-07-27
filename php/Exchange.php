@@ -431,6 +431,7 @@ class Exchange {
         'phemex',
         'poloniex',
         'probit',
+        'swyftx',
         'timex',
         'tokocrypto',
         'tradeogre',

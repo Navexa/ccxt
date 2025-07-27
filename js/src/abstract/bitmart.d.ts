@@ -111,6 +111,7 @@ interface Exchange {
     privatePostContractPrivateModifyTpSlOrder(params?: {}): Promise<implicitReturnType>;
     privatePostContractPrivateSubmitTrailOrder(params?: {}): Promise<implicitReturnType>;
     privatePostContractPrivateCancelTrailOrder(params?: {}): Promise<implicitReturnType>;
+    privatePostContractPrivateSetPositionMode(params?: {}): Promise<implicitReturnType>;
 }
 declare abstract class Exchange extends _Exchange {
 }

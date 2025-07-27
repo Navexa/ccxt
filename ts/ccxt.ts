@@ -140,6 +140,7 @@ import paymium from  './src/paymium.js'
 import phemex from  './src/phemex.js'
 import poloniex from  './src/poloniex.js'
 import probit from  './src/probit.js'
+import swyftx from  './src/swyftx.js'
 import timex from  './src/timex.js'
 import tokocrypto from  './src/tokocrypto.js'
 import tradeogre from  './src/tradeogre.js'
@@ -322,6 +323,7 @@ const exchanges = {
     'phemex':                 phemex,
     'poloniex':               poloniex,
     'probit':                 probit,
+    'swyftx':                 swyftx,
     'timex':                  timex,
     'tokocrypto':             tokocrypto,
     'tradeogre':              tradeogre,
@@ -645,6 +647,7 @@ export {
     phemex,
     poloniex,
     probit,
+    swyftx,
     timex,
     tokocrypto,
     tradeogre,

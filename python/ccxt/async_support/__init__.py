@@ -157,6 +157,7 @@ from ccxt.async_support.paymium import paymium                                  
 from ccxt.async_support.phemex import phemex                                    # noqa: F401
 from ccxt.async_support.poloniex import poloniex                                # noqa: F401
 from ccxt.async_support.probit import probit                                    # noqa: F401
+from ccxt.async_support.swyftx import swyftx                                    # noqa: F401
 from ccxt.async_support.timex import timex                                      # noqa: F401
 from ccxt.async_support.tokocrypto import tokocrypto                            # noqa: F401
 from ccxt.async_support.tradeogre import tradeogre                              # noqa: F401
@@ -266,6 +267,7 @@ exchanges = [
     'phemex',
     'poloniex',
     'probit',
+    'swyftx',
     'timex',
     'tokocrypto',
     'tradeogre',
