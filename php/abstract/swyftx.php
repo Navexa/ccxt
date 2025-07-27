@@ -10,12 +10,6 @@ abstract class swyftx extends \ccxt\Exchange {
     public function public_get_markets_detail($params = array()) {
         return $this->request('markets/detail', 'public', 'GET', $params, null, null, array());
     }
-    public function private_get_markets($params = array()) {
-        return $this->request('markets', 'private', 'GET', $params, null, null, array());
-    }
-    public function private_get_user_trades($params = array()) {
-        return $this->request('user/trades', 'private', 'GET', $params, null, null, array());
-    }
     public function private_get_user_transactionreport($params = array()) {
         return $this->request('user/transactionReport', 'private', 'GET', $params, null, null, array());
     }
@@ -24,12 +18,6 @@ abstract class swyftx extends \ccxt\Exchange {
     }
     public function publicGetMarketsDetail($params = array()) {
         return $this->request('markets/detail', 'public', 'GET', $params, null, null, array());
-    }
-    public function privateGetMarkets($params = array()) {
-        return $this->request('markets', 'private', 'GET', $params, null, null, array());
-    }
-    public function privateGetUserTrades($params = array()) {
-        return $this->request('user/trades', 'private', 'GET', $params, null, null, array());
     }
     public function privateGetUserTransactionReport($params = array()) {
         return $this->request('user/transactionReport', 'private', 'GET', $params, null, null, array());

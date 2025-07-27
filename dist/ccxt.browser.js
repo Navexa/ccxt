@@ -362177,7 +362177,7 @@ class swyftx extends _abstract_swyftx_js__WEBPACK_IMPORTED_MODULE_0__/* ["defaul
                 'fetchTrades': false,
                 'fetchTradingFee': false,
                 'fetchTradingFees': false,
-                'fetchTransactions': true,
+                'fetchTransactions': false,
                 'reduceMargin': false,
                 'setLeverage': false,
                 'setMarginMode': false,
@@ -362201,8 +362201,6 @@ class swyftx extends _abstract_swyftx_js__WEBPACK_IMPORTED_MODULE_0__/* ["defaul
                 },
                 'private': {
                     'get': [
-                        'markets',
-                        'user/trades',
                         'user/transactionReport',
                         'user/balance',
                     ],
@@ -362247,86 +362245,15 @@ class swyftx extends _abstract_swyftx_js__WEBPACK_IMPORTED_MODULE_0__/* ["defaul
         }
         return { 'url': url, 'method': method, 'body': body, 'headers': headers };
     }
-    async fetchMarkets(params = {}) {
-        const response = await this.privateGetMarkets(params);
-        const markets = this.safeValue(response, 'data', []);
-        const result = [];
-        for (let i = 0; i < markets.length; i++) {
-            const market = markets[i];
-            const id = this.safeString(market, 'code');
-            const baseId = this.safeString(market, 'asset');
-            const quoteId = 'AUD'; // Swyftx primarily trades against AUD
-            const base = this.safeCurrencyCode(baseId);
-            const quote = this.safeCurrencyCode(quoteId);
-            const symbol = base + '/' + quote;
-            result.push({
-                'id': id,
-                'symbol': symbol,
-                'base': base,
-                'quote': quote,
-                'settle': undefined,
-                'baseId': baseId,
-                'quoteId': quoteId,
-                'settleId': undefined,
-                'type': 'spot',
-                'spot': true,
-                'margin': false,
-                'swap': false,
-                'future': false,
-                'option': false,
-                'active': this.safeValue(market, 'active', true),
-                'contract': false,
-                'linear': undefined,
-                'inverse': undefined,
-                'contractSize': undefined,
-                'expiry': undefined,
-                'expiryDatetime': undefined,
-                'strike': undefined,
-                'optionType': undefined,
-                'precision': {
-                    'amount': undefined,
-                    'price': undefined,
-                },
-                'limits': {
-                    'leverage': {
-                        'min': undefined,
-                        'max': undefined,
-                    },
-                    'amount': {
-                        'min': undefined,
-                        'max': undefined,
-                    },
-                    'price': {
-                        'min': undefined,
-                        'max': undefined,
-                    },
-                    'cost': {
-                        'min': undefined,
-                        'max': undefined,
-                    },
-                },
-                'info': market,
-            });
-        }
-        return result;
-    }
     async fetchMyTrades(symbol = undefined, since = undefined, limit = undefined, params = {}) {
-        await this.loadMarkets();
         const request = {};
-        if (since !== undefined) {
-            request['startDate'] = this.iso8601(since);
-        }
-        if (limit !== undefined) {
-            request['limit'] = limit;
-        }
-        const response = await this.privateGetUserTrades(this.extend(request, params));
-        const trades = this.safeValue(response, 'data', []);
-        return this.parseTrades(trades, undefined, since, limit);
-    }
-    async fetchTransactions(code = undefined, since = undefined, limit = undefined, params = {}) {
-        const request = {};
+        // 'from' parameter is required by the API
         if (since !== undefined) {
             request['from'] = since;
+        }
+        else {
+            // Default to 1 year ago if not specified
+            request['from'] = Date.now() - (365 * 24 * 60 * 60 * 1000);
         }
         // Add 'to' parameter for end time (defaults to current time if not specified)
         const to = this.safeInteger(params, 'to');
@@ -362343,11 +362270,12 @@ class swyftx extends _abstract_swyftx_js__WEBPACK_IMPORTED_MODULE_0__/* ["defaul
         // Parse CSV response
         if (typeof response === 'string' && response.includes('Crypto Transactions')) {
             const csvTransactions = this.parseSwyftxCsvTransactions(response);
-            return this.parseTransactions(csvTransactions, undefined, since, limit);
+            // Return ALL transactions (both crypto trades and fiat deposits) as trades
+            return this.parseTrades(csvTransactions, undefined, since, limit);
         }
         // Fallback for other response formats
         const transactions = this.safeValue(response, 'data', []);
-        return this.parseTransactions(transactions, undefined, since, limit);
+        return this.parseTrades(transactions, undefined, since, limit);
     }
     async fetchBalance(params = {}) {
         await this.loadMarkets();
@@ -362367,6 +362295,11 @@ class swyftx extends _abstract_swyftx_js__WEBPACK_IMPORTED_MODULE_0__/* ["defaul
         return this.safeBalance(result);
     }
     parseTrade(trade, market = undefined) {
+        // Handle CSV format from transaction report
+        if (this.safeString(trade, '_section')) {
+            return this.parseSwyftxCsvTrade(trade, market);
+        }
+        // Handle standard API format
         const id = this.safeString(trade, 'id');
         const orderId = this.safeString(trade, 'orderId');
         const timestamp = this.parse8601(this.safeString(trade, 'executedTime'));
@@ -362393,6 +362326,83 @@ class swyftx extends _abstract_swyftx_js__WEBPACK_IMPORTED_MODULE_0__/* ["defaul
             'price': price,
             'cost': cost,
             'fee': fee,
+        }, market);
+    }
+    parseSwyftxCsvTrade(trade, market = undefined) {
+        // Parse Swyftx CSV format for both trades and deposits/withdrawals
+        const dateStr = this.safeString(trade, 'Date');
+        const timeStr = this.safeString(trade, 'Time');
+        const event = this.safeString(trade, 'Event');
+        const asset = this.safeString(trade, 'Asset');
+        const amount = this.safeString(trade, 'Amount');
+        const paidCurrency = this.safeString(trade, 'Currency');
+        const paidValue = this.safeString(trade, 'Value');
+        const rate = this.safeString(trade, 'Rate');
+        const uuid = this.safeString(trade, 'UUID');
+        const txId = this.safeString(trade, 'Transaction ID');
+        const feeAmount = this.safeString(trade, 'Fee Amount');
+        const feeAsset = this.safeString(trade, 'Fee Asset');
+        const section = this.safeString(trade, '_section');
+        // Parse datetime from DD/MM/YYYY HH:MM:SS format
+        let timestamp = undefined;
+        if (dateStr && timeStr) {
+            const [day, month, year] = dateStr.split('/');
+            const datetime = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${timeStr}`;
+            timestamp = this.parse8601(datetime);
+        }
+        // Handle different transaction types
+        let symbol = undefined;
+        let side = undefined;
+        let type = undefined;
+        let price = undefined;
+        let cost = undefined;
+        if (section === 'Crypto Transactions') {
+            // Crypto trading transactions
+            if (paidCurrency === 'AUD') {
+                symbol = asset + '/AUD';
+            }
+            else if (paidCurrency && paidCurrency !== asset) {
+                symbol = asset + '/' + paidCurrency;
+            }
+            if (event === 'buy') {
+                side = 'buy';
+            }
+            else if (event === 'sell') {
+                side = 'sell';
+            }
+            type = 'market';
+            price = this.parseNumber(rate);
+            cost = this.parseNumber(paidValue);
+        }
+        else if (section === 'Fiat Transactions') {
+            // Fiat deposits/withdrawals - represent as trades for consistency
+            symbol = asset + '/AUD'; // AUD deposits/withdrawals
+            if (event === 'deposit') {
+                side = 'buy';
+            }
+            else if (event === 'withdrawal') {
+                side = 'sell';
+            }
+            type = event; // 'deposit' or 'withdrawal'
+            price = 1; // 1:1 for fiat
+            cost = this.parseNumber(amount); // Amount is the cost for fiat
+        }
+        return this.safeTrade({
+            'id': uuid || txId,
+            'info': trade,
+            'timestamp': timestamp,
+            'datetime': this.iso8601(timestamp),
+            'symbol': symbol,
+            'order': undefined,
+            'type': type,
+            'side': side,
+            'amount': this.parseNumber(amount),
+            'price': price,
+            'cost': cost,
+            'fee': {
+                'cost': this.parseNumber(feeAmount),
+                'currency': feeAsset || asset,
+            },
         }, market);
     }
     parseTransaction(transaction, currency = undefined) {

@@ -16,16 +16,6 @@ public partial class swyftx : Exchange
         return await this.callAsync ("publicGetMarketsDetail",parameters);
     }
 
-    public async Task<object> privateGetMarkets (object parameters = null)
-    {
-        return await this.callAsync ("privateGetMarkets",parameters);
-    }
-
-    public async Task<object> privateGetUserTrades (object parameters = null)
-    {
-        return await this.callAsync ("privateGetUserTrades",parameters);
-    }
-
     public async Task<object> privateGetUserTransactionReport (object parameters = null)
     {
         return await this.callAsync ("privateGetUserTransactionReport",parameters);

@@ -23,38 +23,6 @@ func (this *swyftx) PublicGetMarketsDetail (args ...interface{}) <-chan interfac
    return ch
 }
 
-func (this *swyftx) PrivateGetMarkets (args ...interface{}) <-chan interface{} {
-   parameters := GetArg(args, 0, nil)
-   ch := make(chan interface{})
-   go func() {
-       defer close(ch)
-       defer func() {
-           if r := recover(); r != nil {
-               ch <- "panic:" + ToString(r)
-           }
-       }()
-       ch <- (<-this.callEndpoint ("privateGetMarkets", parameters))
-       PanicOnError(ch)
-   }()
-   return ch
-}
-
-func (this *swyftx) PrivateGetUserTrades (args ...interface{}) <-chan interface{} {
-   parameters := GetArg(args, 0, nil)
-   ch := make(chan interface{})
-   go func() {
-       defer close(ch)
-       defer func() {
-           if r := recover(); r != nil {
-               ch <- "panic:" + ToString(r)
-           }
-       }()
-       ch <- (<-this.callEndpoint ("privateGetUserTrades", parameters))
-       PanicOnError(ch)
-   }()
-   return ch
-}
-
 func (this *swyftx) PrivateGetUserTransactionReport (args ...interface{}) <-chan interface{} {
    parameters := GetArg(args, 0, nil)
    ch := make(chan interface{})

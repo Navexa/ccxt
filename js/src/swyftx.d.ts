@@ -7,11 +7,10 @@ import type { Balances, Dict, Int, Market, Str, Trade, Transaction, Currency } f
 export default class swyftx extends Exchange {
     describe(): any;
     sign(path: string, api?: string, method?: string, params?: any, headers?: any, body?: any): any;
-    fetchMarkets(params?: {}): Promise<Market[]>;
     fetchMyTrades(symbol?: Str, since?: Int, limit?: Int, params?: {}): Promise<Trade[]>;
-    fetchTransactions(code?: string, since?: Int, limit?: Int, params?: {}): Promise<Transaction[]>;
     fetchBalance(params?: {}): Promise<Balances>;
     parseTrade(trade: Dict, market?: Market): Trade;
+    parseSwyftxCsvTrade(trade: Dict, market?: Market): Trade;
     parseTransaction(transaction: Dict, currency?: Currency): Transaction;
     parseSwyftxCsvTransaction(transaction: Dict, currency?: Currency): Transaction;
     parseTransactionStatus(status: Str): string;
