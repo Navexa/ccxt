@@ -144,20 +144,12 @@ export default class swyftx extends Exchange {
             // Default to 1 year ago if not specified
             request['from'] = Date.now () - (365 * 24 * 60 * 60 * 1000);
         }
-        // Add 'to' parameter for end time (required by API)
-        const to = this.safeInteger (params, 'to');
-        if (to !== undefined) {
-            request['to'] = to;
-        } else {
-            // Default to current time if not specified
-            request['to'] = Date.now ();
-        }
+        // 'to' parameter is required by the API
+        request['to'] = this.safeInteger (params, 'to', Date.now ());
         // Add 'offset' parameter for timezone offset
-        const offset = this.safeInteger (params, 'offset', 36000000); // Default to Australian timezone
-        request['offset'] = offset;
+        request['offset'] = this.safeInteger (params, 'offset', 36000000); // Default to Australian timezone
         // Add 'type' parameter (csv or pdf - API doesn't support json)
-        const type = this.safeString (params, 'type', 'csv');
-        request['type'] = type;
+        request['type'] = this.safeString (params, 'type', 'csv');
         const response = await this.privateGetUserTransactionReport (this.extend (request, params));
         // Parse CSV response
         if (typeof response === 'string' && response.includes ('Crypto Transactions')) {
