@@ -145,7 +145,8 @@ export default class swyftx extends Exchange {
             request['from'] = Date.now () - (365 * 24 * 60 * 60 * 1000);
         }
         // 'to' parameter is required by the API
-        request['to'] = this.safeInteger (params, 'to', Date.now ());
+        const to = this.safeInteger (params, 'to');
+        request['to'] = (to !== undefined) ? to : Date.now ();
         // Add 'offset' parameter for timezone offset
         request['offset'] = this.safeInteger (params, 'offset', 36000000); // Default to Australian timezone
         // Add 'type' parameter (csv or pdf - API doesn't support json)
