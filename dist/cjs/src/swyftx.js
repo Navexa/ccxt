@@ -111,6 +111,53 @@ class swyftx extends swyftx$1 {
             },
         });
     }
+    async refreshAccessToken() {
+        // Swyftx requires exchanging API Key for JWT access token
+        if (!this.apiKey) {
+            throw new errors.AuthenticationError(this.id + ' refreshAccessToken() requires apiKey');
+        }
+        const url = this.urls['api']['private'] + '/auth/refresh/';
+        const body = this.json({ 'apiKey': this.apiKey });
+        const headers = {
+            'Content-Type': 'application/json',
+        };
+        const response = await this.fetch(url, 'POST', headers, body);
+        // Check for errors
+        if (response.error) {
+            const errorCode = this.safeString(response.error, 'error');
+            const errorMessage = this.safeString(response.error, 'message', 'Unknown error');
+            if (errorCode === 'QueryError' || errorCode === 'AuthError') {
+                throw new errors.AuthenticationError(this.id + ' ' + errorMessage + ' (invalid API key)');
+            }
+            throw new errors.ExchangeError(this.id + ' ' + errorMessage);
+        }
+        // Extract access token from response
+        const accessToken = this.safeString(response, 'accessToken');
+        if (!accessToken) {
+            throw new errors.ExchangeError(this.id + ' refreshAccessToken() did not return an access token');
+        }
+        // Cache the token (store in instance property)
+        this['accessToken'] = accessToken;
+        // JWT tokens from Swyftx typically expire in 24 hours
+        // Set expiry to 23 hours from now to be safe
+        this['tokenExpiry'] = this.milliseconds() + (23 * 60 * 60 * 1000);
+        return accessToken;
+    }
+    async ensureAccessToken() {
+        // Check if we have a valid cached token
+        const now = this.milliseconds();
+        if (this['accessToken'] && this['tokenExpiry'] && now < this['tokenExpiry']) {
+            return this['accessToken'];
+        }
+        // If secret is provided directly (JWT), use that and cache it
+        if (this.secret && this.secret.startsWith('eyJ')) {
+            this['accessToken'] = this.secret;
+            this['tokenExpiry'] = now + (23 * 60 * 60 * 1000); // Cache for 23 hours
+            return this.secret;
+        }
+        // Otherwise, refresh using API key
+        return await this.refreshAccessToken();
+    }
     sign(path, api = 'public', method = 'GET', params = {}, headers = undefined, body = undefined) {
         let url = this.urls['api'][api] + '/' + path;
         if (api === 'public') {
@@ -120,8 +167,10 @@ class swyftx extends swyftx$1 {
         }
         else if (api === 'private') {
             this.checkRequiredCredentials();
+            // Use cached access token if available, otherwise will be refreshed by fetch override
+            const token = this['accessToken'] || this.secret || '';
             headers = {
-                'Authorization': 'Bearer ' + this.secret,
+                'Authorization': 'Bearer ' + token,
                 'Content-Type': 'application/json',
             };
             if (Object.keys(params).length) {
@@ -134,6 +183,20 @@ class swyftx extends swyftx$1 {
             }
         }
         return { 'url': url, 'method': method, 'body': body, 'headers': headers };
+    }
+    async fetch(url, method = 'GET', headers = undefined, body = undefined) {
+        // Ensure we have a valid access token before making private API calls
+        if (url.includes('/user/') || url.includes('/auth/')) {
+            // Skip token refresh for the refresh endpoint itself
+            if (!url.includes('/auth/refresh/')) {
+                await this.ensureAccessToken();
+                // Update authorization header with fresh token
+                if (headers && headers['Authorization']) {
+                    headers['Authorization'] = 'Bearer ' + this['accessToken'];
+                }
+            }
+        }
+        return await super.fetch(url, method, headers, body);
     }
     async fetchMyTrades(symbol = undefined, since = undefined, limit = undefined, params = {}) {
         const request = {};
