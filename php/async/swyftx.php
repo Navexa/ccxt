@@ -115,6 +115,59 @@ class swyftx extends Exchange {
         ));
     }
 
+    public function refresh_access_token(): PromiseInterface {
+        return Async\async(function ()  {
+            // Swyftx requires exchanging API Key for JWT access token
+            if (!$this->apiKey) {
+                throw new AuthenticationError($this->id . ' refreshAccessToken() requires apiKey');
+            }
+            $url = $this->urls['api']['private'] . '/auth/refresh/';
+            $body = $this->json(array( 'apiKey' => $this->apiKey ));
+            $headers = array(
+                'Content-Type' => 'application/json',
+            );
+            $response = Async\await($this->fetch($url, 'POST', $headers, $body));
+            // Check for errors
+            if ($response->error) {
+                $errorCode = $this->safe_string($response->error, 'error');
+                $errorMessage = $this->safe_string($response->error, 'message', 'Unknown error');
+                if ($errorCode === 'QueryError' || $errorCode === 'AuthError') {
+                    throw new AuthenticationError($this->id . ' ' . $errorMessage . ' (invalid API key)');
+                }
+                throw new ExchangeError($this->id . ' ' . $errorMessage);
+            }
+            // Extract access token from $response
+            $accessToken = $this->safe_string($response, 'accessToken');
+            if (!$accessToken) {
+                throw new ExchangeError($this->id . ' refreshAccessToken() did not return an access token');
+            }
+            // Cache the token (is_array(instance property) && array_key_exists(store, instance property))
+            $this->$'accessToken' = $accessToken;
+            // JWT tokens from Swyftx typically expire in 24 hours
+            // Set expiry to 23 hours from now to be safe
+            $this->$'tokenExpiry' = $this->milliseconds() . (23 * 60 * 60 * 1000);
+            return $accessToken;
+        }) ();
+    }
+
+    public function ensure_access_token(): PromiseInterface {
+        return Async\async(function ()  {
+            // Check if we have a valid cached token
+            $now = $this->milliseconds();
+            if ($this->$'accessToken' && $this->$'tokenExpiry' && $now < $this->$'tokenExpiry') {
+                return $this->$'accessToken';
+            }
+            // If secret is provided directly (JWT), use that and cache it
+            if ($this->secret && str_starts_with($this->secret, 'eyJ')) {
+                $this->$'accessToken' = $this->secret;
+                $this->$'tokenExpiry' = $now . (23 * 60 * 60 * 1000); // Cache for 23 hours
+                return $this->secret;
+            }
+            // Otherwise, refresh using API key
+            return Async\await($this->refresh_access_token());
+        }) ();
+    }
+
     public function sign(string $path, string $api = 'public', string $method = 'GET', mixed $params = array (), mixed $headers = null, mixed $body = null): mixed {
         $url = $this->urls['api'][$api] . '/' . $path;
         if ($api === 'public') {
@@ -123,8 +176,10 @@ class swyftx extends Exchange {
             }
         } elseif ($api === 'private') {
             $this->check_required_credentials();
+            // Use cached access $token if available, otherwise will be refreshed by fetch override
+            $token = $this->$'accessToken' || $this->secret || '';
             $headers = array(
-                'Authorization' => 'Bearer ' . $this->secret,
+                'Authorization' => 'Bearer ' . $token,
                 'Content-Type' => 'application/json',
             );
             if ($params) {
@@ -138,6 +193,23 @@ class swyftx extends Exchange {
         return array( 'url' => $url, 'method' => $method, 'body' => $body, 'headers' => $headers );
     }
 
+    public function fetch($url, $method = 'GET', mixed $headers = null, mixed $body = null) {
+        return Async\async(function () use ($url, $method, $headers, $body) {
+            // Ensure we have a valid access token before making private API calls
+            if ($url->includes ('/user/') || $url->includes ('/auth/')) {
+                // Skip token refresh for the refresh endpoint itself
+                if (!$url->includes ('/auth/refresh/')) {
+                    Async\await($this->ensure_access_token());
+                    // Update authorization header with fresh token
+                    if ($headers && $headers['Authorization']) {
+                        $headers['Authorization'] = 'Bearer ' . $this->$'accessToken';
+                    }
+                }
+            }
+            return Async\await(parent::fetch($url, $method, $headers, $body));
+        }) ();
+    }
+
     public function fetch_my_trades(?string $symbol = null, ?int $since = null, ?int $limit = null, $params = array ()): PromiseInterface {
         return Async\async(function () use ($symbol, $since, $limit, $params) {
             $request = array();
@@ -148,17 +220,13 @@ class swyftx extends Exchange {
                 // Default $to 1 year ago if not specified
                 $request['from'] = Date.now () - (365 * 24 * 60 * 60 * 1000);
             }
-            // Add 'to' parameter for end time (defaults $to current time if not specified)
+            // 'to' parameter is required by the API
             $to = $this->safe_integer($params, 'to');
-            if ($to !== null) {
-                $request['to'] = $to;
-            }
-            // Add 'offset' parameter for timezone $offset
-            $offset = $this->safe_integer($params, 'offset', 36000000); // Default $to Australian timezone
-            $request['offset'] = $offset;
+            $request['to'] = ($to !== null) ? $to : Date.now ();
+            // Add 'offset' parameter for timezone offset
+            $request['offset'] = $this->safe_integer($params, 'offset', 36000000); // Default $to Australian timezone
             // Add 'type' parameter (csv or pdf - API doesn't support json)
-            $type = $this->safe_string($params, 'type', 'csv');
-            $request['type'] = $type;
+            $request['type'] = $this->safe_string($params, 'type', 'csv');
             $response = Async\await($this->privateGetUserTransactionReport ($this->extend($request, $params)));
             // Parse CSV $response
             if (gettype($response) === 'string' && $response->includes ('Crypto Transactions')) {

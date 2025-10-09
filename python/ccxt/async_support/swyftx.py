@@ -114,6 +114,47 @@ class swyftx(Exchange, ImplicitAPI):
             },
         })
 
+    async def refresh_access_token(self) -> str:
+        # Swyftx requires exchanging API Key for JWT access token
+        if not self.apiKey:
+            raise AuthenticationError(self.id + ' refreshAccessToken() requires apiKey')
+        url = self.urls['api']['private'] + '/auth/refresh/'
+        body = self.json({'apiKey': self.apiKey})
+        headers = {
+            'Content-Type': 'application/json',
+        }
+        response = await self.fetch(url, 'POST', headers, body)
+        # Check for errors
+        if response.error:
+            errorCode = self.safe_string(response.error, 'error')
+            errorMessage = self.safe_string(response.error, 'message', 'Unknown error')
+            if errorCode == 'QueryError' or errorCode == 'AuthError':
+                raise AuthenticationError(self.id + ' ' + errorMessage + '(invalid API key)')
+            raise ExchangeError(self.id + ' ' + errorMessage)
+        # Extract access token from response
+        accessToken = self.safe_string(response, 'accessToken')
+        if not accessToken:
+            raise ExchangeError(self.id + ' refreshAccessToken() did not return an access token')
+        # Cache the token(store in instance property)
+        getattr(self, 'accessToken') = accessToken
+        # JWT tokens from Swyftx typically expire in 24 hours
+        # Set expiry to 23 hours from now to be safe
+        getattr(self, 'tokenExpiry') = self.milliseconds() + (23 * 60 * 60 * 1000)
+        return accessToken
+
+    async def ensure_access_token(self) -> str:
+        # Check if we have a valid cached token
+        now = self.milliseconds()
+        if getattr(self, 'accessToken') and getattr(self, 'tokenExpiry') and now < getattr(self, 'tokenExpiry'):
+            return getattr(self, 'accessToken')
+        # If secret is provided directly(JWT), use that and cache it
+        if self.secret and self.secret.startswith('eyJ'):
+            getattr(self, 'accessToken') = self.secret
+            getattr(self, 'tokenExpiry') = now + (23 * 60 * 60 * 1000)  # Cache for 23 hours
+            return self.secret
+        # Otherwise, refresh using API key
+        return await self.refresh_access_token()
+
     def sign(self, path: str, api: str = 'public', method: str = 'GET', params: Any = {}, headers: Any = None, body: Any = None) -> Any:
         url = self.urls['api'][api] + '/' + path
         if api == 'public':
@@ -121,8 +162,10 @@ class swyftx(Exchange, ImplicitAPI):
                 url += '?' + self.urlencode(params)
         elif api == 'private':
             self.check_required_credentials()
+            # Use cached access token if available, otherwise will be refreshed by fetch override
+            token = getattr(self, 'accessToken') or self.secret or ''
             headers = {
-                'Authorization': 'Bearer ' + self.secret,
+                'Authorization': 'Bearer ' + token,
                 'Content-Type': 'application/json',
             }
             if params:
@@ -132,6 +175,17 @@ class swyftx(Exchange, ImplicitAPI):
                     body = self.json(params)
         return {'url': url, 'method': method, 'body': body, 'headers': headers}
 
+    async def fetch(self, url, method='GET', headers: Any = None, body: Any = None):
+        # Ensure we have a valid access token before making private API calls
+        if url.includes('/user/') or url.includes('/auth/'):
+            # Skip token refresh for the refresh endpoint itself
+            if not url.includes('/auth/refresh/'):
+                await self.ensure_access_token()
+                # Update authorization header with fresh token
+                if headers and headers['Authorization']:
+                    headers['Authorization'] = 'Bearer ' + getattr(self, 'accessToken')
+        return await super(swyftx, self).fetch(url, method, headers, body)
+
     async def fetch_my_trades(self, symbol: Str = None, since: Int = None, limit: Int = None, params={}) -> List[Trade]:
         request: dict = {}
         # 'from' parameter is required by the API
@@ -140,16 +194,13 @@ class swyftx(Exchange, ImplicitAPI):
         else:
             # Default to 1 year ago if not specified
             request['from'] = Date.now() - (365 * 24 * 60 * 60 * 1000)
-        # Add 'to' parameter for end time(defaults to current time if not specified)
+        # 'to' parameter is required by the API
         to = self.safe_integer(params, 'to')
-        if to is not None:
-            request['to'] = to
+        request['to'] = to if (to is not None) else Date.now()
         # Add 'offset' parameter for timezone offset
-        offset = self.safe_integer(params, 'offset', 36000000)  # Default to Australian timezone
-        request['offset'] = offset
+        request['offset'] = self.safe_integer(params, 'offset', 36000000)  # Default to Australian timezone
         # Add 'type' parameter(csv or pdf - API doesn't support json)
-        type = self.safe_string(params, 'type', 'csv')
-        request['type'] = type
+        request['type'] = self.safe_string(params, 'type', 'csv')
         response = await self.privateGetUserTransactionReport(self.extend(request, params))
         # Parse CSV response
         if isinstance(response, str) and response.includes('Crypto Transactions'):
