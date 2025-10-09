@@ -362128,6 +362128,10 @@ class swyftx extends _abstract_swyftx_js__WEBPACK_IMPORTED_MODULE_0__/* ["defaul
             'countries': ['AU'],
             'rateLimit': 1000,
             'pro': false,
+            'requiredCredentials': {
+                'apiKey': true,
+                'secret': false, // Secret is optional - can be JWT or will be obtained via API key
+            },
             'has': {
                 'CORS': undefined,
                 'spot': true,

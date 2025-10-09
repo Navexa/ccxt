@@ -21,6 +21,10 @@ class swyftx(Exchange, ImplicitAPI):
             'countries': ['AU'],  # Australia
             'rateLimit': 1000,
             'pro': False,
+            'requiredCredentials': {
+                'apiKey': True,
+                'secret': False,  # Secret is optional - can be JWT or will be obtained via API key
+            },
             'has': {
                 'CORS': None,
                 'spot': True,

@@ -17,6 +17,10 @@ class swyftx extends Exchange {
             'countries' => array( 'AU' ), // Australia
             'rateLimit' => 1000,
             'pro' => false,
+            'requiredCredentials' => array(
+                'apiKey' => true,
+                'secret' => false, // Secret is optional - can be JWT or will be obtained via API key
+            ),
             'has' => array(
                 'CORS' => null,
                 'spot' => true,

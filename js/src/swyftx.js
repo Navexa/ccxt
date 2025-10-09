@@ -21,6 +21,10 @@ export default class swyftx extends Exchange {
             'countries': ['AU'],
             'rateLimit': 1000,
             'pro': false,
+            'requiredCredentials': {
+                'apiKey': true,
+                'secret': false, // Secret is optional - can be JWT or will be obtained via API key
+            },
             'has': {
                 'CORS': undefined,
                 'spot': true,
