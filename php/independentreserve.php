@@ -706,7 +706,9 @@ class independentreserve extends Exchange {
         // Fetch brokerage fees and match them to $trades
         //
         try {
+            var_dump ('[independentreserve] Fetching brokerage fees for $fee matching...');
             $brokerageFees = $this->fetch_transactions(null, $since, $limit, array( 'txTypes' => array( 'Brokerage' ) ));
+            var_dump (`[independentreserve] Fetched $array(strlen($brokerageFees)) brokerage $fee(s)`);
             // Create a map of fees by timestamp and currency for efficient matching
             $feeMap = array();
             for ($i = 0; $i < count($brokerageFees); $i++) {
@@ -718,22 +720,26 @@ class independentreserve extends Exchange {
                     $feeMap[$key] = array();
                 }
                 $feeMap[$key][] = $fee;
+                var_dump (`[independentreserve] Fee ${$i} => ${$feeCurrency} at ${$feeTimestamp}, amount => $array($fee['amount'])`);
             }
             // Match fees to $trades
+            var_dump (`[independentreserve] Matching fees to $array(strlen($trades)) $trade(s)...`);
             for ($i = 0; $i < count($trades); $i++) {
                 $trade = $trades[$i];
                 $tradeTimestamp = $trade['timestamp'];
-                $tradeMarket = $this->safe_market($trade['symbol']);
-                $quoteCurrency = $tradeMarket['quote'];
+                // Get quote currency from the trade's raw info
+                $quoteId = $this->safe_string($trade['info'], 'SecondaryCurrencyCode');
+                $quoteCurrency = $this->safe_currency_code($quoteId);
                 // Try exact timestamp match first
                 $key = $tradeTimestamp . ':' . $quoteCurrency;
                 $matchedFees = $this->safe_value($feeMap, $key);
-                // If no exact match, try within ±5 seconds
+                // If no exact match, try within ±1 second with millisecond precision
                 if ($matchedFees === null) {
-                    for ($offset = -5000; $offset <= 5000; $offset += 1000) {
+                    for ($offset = -1000; $offset <= 1000; $offset += 1) {
                         $key = ($tradeTimestamp . $offset) . ':' . $quoteCurrency;
                         $matchedFees = $this->safe_value($feeMap, $key);
                         if ($matchedFees !== null) {
+                            var_dump (`[independentreserve] Trade ${$i} => Matched $fee with $offset ${$offset}ms`);
                             break;
                         }
                     }
@@ -746,16 +752,20 @@ class independentreserve extends Exchange {
                         'cost' => $this->safe_number($matchedFee, 'amount'),
                         'rate' => null,
                     );
+                    var_dump (`[independentreserve] Trade ${$i} => Fee matched - ${$quoteCurrency} $array($trade['fee']['cost'])`);
                     // Remove used $fee from map to avoid double-matching
                     array_shift($matchedFees);
                     if (strlen($matchedFees) === 0) {
                         unset($feeMap[$key]);
                     }
+                } else {
+                    var_dump (`[independentreserve] Trade ${$i} => No $fee match found for ${$quoteCurrency} at ${$tradeTimestamp}`);
                 }
             }
         } catch (Exception $e) {
             // If fetching fees fails, continue with $trades without fees
             // This ensures backward compatibility if fetchTransactions has issues
+            console.error ('[independentreserve] ERROR in $fee matching:', $e);
         }
         return $trades;
     }
