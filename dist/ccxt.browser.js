@@ -200356,7 +200356,9 @@ class independentreserve extends _abstract_independentreserve_js__WEBPACK_IMPORT
         // Fetch brokerage fees and match them to trades
         //
         try {
+            console.log('[independentreserve] Fetching brokerage fees for fee matching...');
             const brokerageFees = await this.fetchTransactions(undefined, since, limit, { 'txTypes': ['Brokerage'] });
+            console.log(`[independentreserve] Fetched ${brokerageFees.length} brokerage fee(s)`);
             // Create a map of fees by timestamp and currency for efficient matching
             const feeMap = {};
             for (let i = 0; i < brokerageFees.length; i++) {
@@ -200368,22 +200370,26 @@ class independentreserve extends _abstract_independentreserve_js__WEBPACK_IMPORT
                     feeMap[key] = [];
                 }
                 feeMap[key].push(fee);
+                console.log(`[independentreserve] Fee ${i}: ${feeCurrency} at ${feeTimestamp}, amount: ${fee['amount']}`);
             }
             // Match fees to trades
+            console.log(`[independentreserve] Matching fees to ${trades.length} trade(s)...`);
             for (let i = 0; i < trades.length; i++) {
                 const trade = trades[i];
                 const tradeTimestamp = trade['timestamp'];
-                const tradeMarket = this.safeMarket(trade['symbol']);
-                const quoteCurrency = tradeMarket['quote'];
+                // Get quote currency from the trade's raw info
+                const quoteId = this.safeString(trade['info'], 'SecondaryCurrencyCode');
+                const quoteCurrency = this.safeCurrencyCode(quoteId);
                 // Try exact timestamp match first
                 let key = tradeTimestamp + ':' + quoteCurrency;
                 let matchedFees = this.safeValue(feeMap, key);
-                // If no exact match, try within ±5 seconds
+                // If no exact match, try within ±1 second with millisecond precision
                 if (matchedFees === undefined) {
-                    for (let offset = -5000; offset <= 5000; offset += 1000) {
+                    for (let offset = -1000; offset <= 1000; offset += 1) {
                         key = (tradeTimestamp + offset) + ':' + quoteCurrency;
                         matchedFees = this.safeValue(feeMap, key);
                         if (matchedFees !== undefined) {
+                            console.log(`[independentreserve] Trade ${i}: Matched fee with offset ${offset}ms`);
                             break;
                         }
                     }
@@ -200396,17 +200402,22 @@ class independentreserve extends _abstract_independentreserve_js__WEBPACK_IMPORT
                         'cost': this.safeNumber(matchedFee, 'amount'),
                         'rate': undefined,
                     };
+                    console.log(`[independentreserve] Trade ${i}: Fee matched - ${quoteCurrency} ${trade['fee']['cost']}`);
                     // Remove used fee from map to avoid double-matching
                     matchedFees.shift();
                     if (matchedFees.length === 0) {
                         delete feeMap[key];
                     }
                 }
+                else {
+                    console.log(`[independentreserve] Trade ${i}: No fee match found for ${quoteCurrency} at ${tradeTimestamp}`);
+                }
             }
         }
         catch (e) {
             // If fetching fees fails, continue with trades without fees
             // This ensures backward compatibility if fetchTransactions has issues
+            console.error('[independentreserve] ERROR in fee matching:', e);
         }
         return trades;
     }
