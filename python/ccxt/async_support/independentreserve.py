@@ -681,61 +681,34 @@ class independentreserve(Exchange, ImplicitAPI):
             market = self.market(symbol)
         trades = self.parse_trades(response['Data'], market, since, limit)
         #
-        # Fetch brokerage fees and match them to trades
+        # Fetch brokerage fees and match them to trades using CorrelationId
         #
         try:
-            print('[independentreserve] Fetching brokerage fees for fee matching...')
             brokerageFees = await self.fetch_transactions(None, since, limit, {'txTypes': ['Brokerage']})
-            print(`[independentreserve] Fetched len(${brokerageFees)} brokerage fee(s)`)
-            # Create a map of fees by timestamp and currency for efficient matching
+            # Create a map of fees by CorrelationId for O(1) lookup
             feeMap: dict = {}
             for i in range(0, len(brokerageFees)):
                 fee = brokerageFees[i]
-                feeTimestamp = fee['timestamp']
-                feeCurrency = fee['currency']
-                key = feeTimestamp + ':' + feeCurrency
-                if feeMap[key] is None:
-                    feeMap[key] = []
-                feeMap[key].append(fee)
-                print(`[independentreserve] Fee ${i}: ${feeCurrency} at ${feeTimestamp}, amount: ${fee['amount']}`)
-            # Match fees to trades
-            print(`[independentreserve] Matching fees to len(${trades)} trade(s)...`)
+                correlationId = self.safe_string(fee['info'], 'CorrelationId')
+                if correlationId is not None and correlationId != None:
+                    feeMap[correlationId] = fee
+            # Match fees to trades using TradeGuid -> CorrelationId
             for i in range(0, len(trades)):
                 trade = trades[i]
-                tradeTimestamp = trade['timestamp']
-                # Get quote currency from the trade's raw info
-                quoteId = self.safe_string(trade['info'], 'SecondaryCurrencyCode')
-                quoteCurrency = self.safe_currency_code(quoteId)
-                # Try exact timestamp match first
-                key = tradeTimestamp + ':' + quoteCurrency
-                matchedFees = self.safe_value(feeMap, key)
-                # If no exact match, try within ±1 second with millisecond precision
-                if matchedFees is None:
-                    for offset in range(-1000, 1000):
-                        key = (tradeTimestamp + offset) + ':' + quoteCurrency
-                        matchedFees = self.safe_value(feeMap, key)
-                        if matchedFees is not None:
-                            print(`[independentreserve] Trade ${i}: Matched fee with offset ${offset}ms`)
-                            break
-                # If we found matching fees, use the first one(should only be one per trade)
-                if matchedFees is not None and len(matchedFees) > 0:
-                    matchedFee = matchedFees[0]
+                tradeGuid = self.safe_string(trade['info'], 'TradeGuid')
+                matchedFee = self.safe_value(feeMap, tradeGuid)
+                if matchedFee is not None:
+                    # Get quote currency from the trade's raw info
+                    quoteId = self.safe_string(trade['info'], 'SecondaryCurrencyCode')
+                    quoteCurrency = self.safe_currency_code(quoteId)
                     trade['fee'] = {
                         'currency': quoteCurrency,
                         'cost': self.safe_number(matchedFee, 'amount'),
                         'rate': None,
                     }
-                    print(`[independentreserve] Trade ${i}: Fee matched - ${quoteCurrency} ${trade['fee']['cost']}`)
-                    # Remove used fee from map to avoid double-matching
-                    matchedFees.pop(0)
-                    if len(matchedFees) == 0:
-                        del feeMap[key]
-                else:
-                    print(`[independentreserve] Trade ${i}: No fee match found for ${quoteCurrency} at ${tradeTimestamp}`)
         except Exception as e:
             # If fetching fees fails, continue with trades without fees
             # This ensures backward compatibility if fetchTransactions has issues
-            console.error('[independentreserve] ERROR in fee matching:', e)
         return trades
 
     def parse_trade(self, trade: dict, market: Market = None) -> Trade:
