@@ -76,6 +76,7 @@ class independentreserve(Exchange, ImplicitAPI):
                 'fetchTrades': True,
                 'fetchTradingFee': False,
                 'fetchTradingFees': True,
+                'fetchTransactions': True,
                 'reduceMargin': False,
                 'setLeverage': False,
                 'setMarginMode': False,
@@ -677,7 +678,54 @@ class independentreserve(Exchange, ImplicitAPI):
         market = None
         if symbol is not None:
             market = self.market(symbol)
-        return self.parse_trades(response['Data'], market, since, limit)
+        trades = self.parse_trades(response['Data'], market, since, limit)
+        #
+        # Fetch brokerage fees and match them to trades
+        #
+        try:
+            brokerageFees = self.fetch_transactions(None, since, limit, {'txTypes': ['Brokerage']})
+            # Create a map of fees by timestamp and currency for efficient matching
+            feeMap: dict = {}
+            for i in range(0, len(brokerageFees)):
+                fee = brokerageFees[i]
+                feeTimestamp = fee['timestamp']
+                feeCurrency = fee['currency']
+                key = feeTimestamp + ':' + feeCurrency
+                if feeMap[key] is None:
+                    feeMap[key] = []
+                feeMap[key].append(fee)
+            # Match fees to trades
+            for i in range(0, len(trades)):
+                trade = trades[i]
+                tradeTimestamp = trade['timestamp']
+                tradeMarket = self.safe_market(trade['symbol'])
+                quoteCurrency = tradeMarket['quote']
+                # Try exact timestamp match first
+                key = tradeTimestamp + ':' + quoteCurrency
+                matchedFees = self.safe_value(feeMap, key)
+                # If no exact match, try within ±5 seconds
+                if matchedFees is None:
+                    for offset in range(-5000, 5000):
+                        key = (tradeTimestamp + offset) + ':' + quoteCurrency
+                        matchedFees = self.safe_value(feeMap, key)
+                        if matchedFees is not None:
+                            break
+                # If we found matching fees, use the first one(should only be one per trade)
+                if matchedFees is not None and len(matchedFees) > 0:
+                    matchedFee = matchedFees[0]
+                    trade['fee'] = {
+                        'currency': quoteCurrency,
+                        'cost': self.safe_number(matchedFee, 'amount'),
+                        'rate': None,
+                    }
+                    # Remove used fee from map to avoid double-matching
+                    matchedFees.pop(0)
+                    if len(matchedFees) == 0:
+                        del feeMap[key]
+        except Exception as e:
+            # If fetching fees fails, continue with trades without fees
+            # This ensures backward compatibility if fetchTransactions has issues
+        return trades
 
     def parse_trade(self, trade: dict, market: Market = None) -> Trade:
         timestamp = self.parse8601(trade['TradeTimestampUtc'])
@@ -776,6 +824,70 @@ class independentreserve(Exchange, ImplicitAPI):
                 'tierBased': True,
             }
         return result
+
+    def fetch_transactions(self, code: Str = None, since: Int = None, limit: Int = 50, params={}):
+        """
+        fetch history of deposits, withdrawals, and other transactions
+
+        https://www.independentreserve.com/API#GetTransactions
+
+        :param str [code]: unified currency code for the currency of the transactions, default is None
+        :param int [since]: timestamp in ms of the earliest transaction, default is None
+        :param int [limit]: max number of transactions to return, default is 50
+        :param dict [params]: extra parameters specific to the exchange API endpoint
+        :param str[] [params.txTypes]: array of transaction types to filter by(e.g., ['Brokerage', 'Trade', 'Deposit'])
+        :returns dict[]: a list of `transaction structures <https://docs.ccxt.com/#/?id=transaction-structure>`
+        """
+        self.load_markets()
+        currency = None
+        request: dict = self.ordered({
+            'pageIndex': self.safe_integer(params, 'pageIndex', 1),
+            'pageSize': limit,
+        })
+        if code is not None:
+            currency = self.currency(code)
+            request['primaryCurrencyCode'] = currency['id']
+        if since is not None:
+            request['fromTimestampUtc'] = self.iso8601(since)
+        txTypes = self.safe_value(params, 'txTypes')
+        if txTypes is not None:
+            request['txTypes'] = txTypes
+        params = self.omit(params, ['pageIndex', 'txTypes'])
+        response = self.privatePostGetTransactions(self.extend(request, params))
+        #
+        #     {
+        #         "Data": [
+        #             {
+        #                 "Balance": 100.0,
+        #                 "BitcoinTransactionId": null,
+        #                 "BitcoinTransactionOutputIndex": null,
+        #                 "Comment": null,
+        #                 "CreatedTimestampUtc": "2014-09-23T12:39:34.3817763Z",
+        #                 "Credit": 100.0,
+        #                 "CurrencyCode": "Xbt",
+        #                 "Debit": null,
+        #                 "EthereumTransactionId": null,
+        #                 "Status": "Confirmed",
+        #                 "Type": "Deposit",
+        #                 "TransactionGuid": "6a8a1c5f-c7e2-485a-9da3-33db59f14bc8"
+        #             },
+        #             {
+        #                 "Balance": 93.02,
+        #                 "Credit": null,
+        #                 "Debit": 6.98,
+        #                 "Type": "Brokerage",
+        #                 "CreatedTimestampUtc": "2014-09-23T12:39:34.3817763Z",
+        #                 "CurrencyCode": "Usd",
+        #                 "TransactionGuid": "bb8c8d5f-c7e2-485a-9da3-33db59f14bc9"
+        #             }
+        #         ],
+        #         "PageSize": 25,
+        #         "TotalItems": 2,
+        #         "TotalPages": 1
+        #     }
+        #
+        data = self.safe_list(response, 'Data', [])
+        return self.parse_transactions(data, currency, since, limit)
 
     def create_order(self, symbol: str, type: OrderType, side: OrderSide, amount: float, price: Num = None, params={}):
         """
@@ -939,6 +1051,7 @@ class independentreserve(Exchange, ImplicitAPI):
 
     def parse_transaction(self, transaction: dict, currency: Currency = None) -> Transaction:
         #
+        # withdraw() response
         #    {
         #        "TransactionGuid": "dc932e19-562b-4c50-821e-a73fd048b93b",
         #        "PrimaryCurrencyCode": "Bch",
@@ -955,21 +1068,71 @@ class independentreserve(Exchange, ImplicitAPI):
         #        "Transaction": null
         #    }
         #
+        # fetchTransactions() / GetTransactions response
+        #    {
+        #        "Balance": 93.02,
+        #        "Credit": null,
+        #        "Debit": 6.98,
+        #        "Type": "Brokerage",
+        #        "CreatedTimestampUtc": "2014-09-23T12:39:34.3817763Z",
+        #        "CurrencyCode": "Usd",
+        #        "TransactionGuid": "bb8c8d5f-c7e2-485a-9da3-33db59f14bc9"
+        #    }
+        #
         amount = self.safe_dict(transaction, 'Amount')
         destination = self.safe_dict(transaction, 'Destination')
-        currencyId = self.safe_string(transaction, 'PrimaryCurrencyCode')
+        currencyId = self.safe_string_2(transaction, 'PrimaryCurrencyCode', 'CurrencyCode')
         datetime = self.safe_string(transaction, 'CreatedTimestampUtc')
         address = self.safe_string(destination, 'Address')
         tag = self.safe_string(destination, 'Tag')
         code = self.safe_currency_code(currencyId, currency)
+        #
+        # Determine transaction type from 'Type' field or default to 'withdraw' for legacy response
+        #
+        type = self.safe_string_lower(transaction, 'Type')
+        if type is not None:
+            # Map Independent Reserve transaction types to CCXT types
+            if type == 'deposit':
+                type = 'deposit'
+            elif type == 'withdrawal':
+                type = 'withdrawal'
+            elif type == 'trade':
+                type = 'trade'
+            elif (type == 'brokerage') or (type == 'depositfee') or (type == 'withdrawalfee') or (type == 'accountfee') or (type == 'statementfee') or (type == 'gst'):
+                type = 'fee'
+            elif type == 'referralcommission':
+                type = 'rebate'
+        else:
+            type = 'withdrawal'  # legacy withdraw() response
+        #
+        # Amount handling: GetTransactions uses Credit/Debit, withdraw() uses Amount.Total
+        #
+        transactionAmount = self.safe_number(amount, 'Total')
+        credit = self.safe_number(transaction, 'Credit')
+        debit = self.safe_number(transaction, 'Debit')
+        if credit is not None:
+            transactionAmount = credit
+        elif debit is not None:
+            transactionAmount = debit
+        #
+        # Fee handling
+        #
+        feeCost = self.safe_number(amount, 'Fee')
+        if (type == 'fee') and (debit is not None):
+            # For fee transactions, the debit amount IS the fee
+            feeCost = debit
+        #
+        # Transaction ID handling
+        #
+        txid = self.safe_string_2(transaction, 'BitcoinTransactionId', 'EthereumTransactionId')
         return {
             'info': transaction,
             'id': self.safe_string(transaction, 'TransactionGuid'),
-            'txid': None,
-            'type': 'withdraw',
+            'txid': txid,
+            'type': type,
             'currency': code,
             'network': None,
-            'amount': self.safe_number(amount, 'Total'),
+            'amount': transactionAmount,
             'status': self.safe_string(transaction, 'Status'),
             'timestamp': self.parse8601(datetime),
             'datetime': datetime,
@@ -980,10 +1143,10 @@ class independentreserve(Exchange, ImplicitAPI):
             'tagFrom': None,
             'tagTo': tag,
             'updated': None,
-            'comment': None,
+            'comment': self.safe_string(transaction, 'Comment'),
             'fee': {
                 'currency': code,
-                'cost': self.safe_number(amount, 'Fee'),
+                'cost': feeCost,
                 'rate': None,
             },
             'internal': False,

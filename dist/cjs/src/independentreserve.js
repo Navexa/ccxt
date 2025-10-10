@@ -74,6 +74,7 @@ class independentreserve extends independentreserve$1 {
                 'fetchTrades': true,
                 'fetchTradingFee': false,
                 'fetchTradingFees': true,
+                'fetchTransactions': true,
                 'reduceMargin': false,
                 'setLeverage': false,
                 'setMarginMode': false,
@@ -710,7 +711,64 @@ class independentreserve extends independentreserve$1 {
         if (symbol !== undefined) {
             market = this.market(symbol);
         }
-        return this.parseTrades(response['Data'], market, since, limit);
+        const trades = this.parseTrades(response['Data'], market, since, limit);
+        //
+        // Fetch brokerage fees and match them to trades
+        //
+        try {
+            const brokerageFees = await this.fetchTransactions(undefined, since, limit, { 'txTypes': ['Brokerage'] });
+            // Create a map of fees by timestamp and currency for efficient matching
+            const feeMap = {};
+            for (let i = 0; i < brokerageFees.length; i++) {
+                const fee = brokerageFees[i];
+                const feeTimestamp = fee['timestamp'];
+                const feeCurrency = fee['currency'];
+                const key = feeTimestamp + ':' + feeCurrency;
+                if (feeMap[key] === undefined) {
+                    feeMap[key] = [];
+                }
+                feeMap[key].push(fee);
+            }
+            // Match fees to trades
+            for (let i = 0; i < trades.length; i++) {
+                const trade = trades[i];
+                const tradeTimestamp = trade['timestamp'];
+                const tradeMarket = this.safeMarket(trade['symbol']);
+                const quoteCurrency = tradeMarket['quote'];
+                // Try exact timestamp match first
+                let key = tradeTimestamp + ':' + quoteCurrency;
+                let matchedFees = this.safeValue(feeMap, key);
+                // If no exact match, try within ±5 seconds
+                if (matchedFees === undefined) {
+                    for (let offset = -5000; offset <= 5000; offset += 1000) {
+                        key = (tradeTimestamp + offset) + ':' + quoteCurrency;
+                        matchedFees = this.safeValue(feeMap, key);
+                        if (matchedFees !== undefined) {
+                            break;
+                        }
+                    }
+                }
+                // If we found matching fees, use the first one (should only be one per trade)
+                if (matchedFees !== undefined && matchedFees.length > 0) {
+                    const matchedFee = matchedFees[0];
+                    trade['fee'] = {
+                        'currency': quoteCurrency,
+                        'cost': this.safeNumber(matchedFee, 'amount'),
+                        'rate': undefined,
+                    };
+                    // Remove used fee from map to avoid double-matching
+                    matchedFees.shift();
+                    if (matchedFees.length === 0) {
+                        delete feeMap[key];
+                    }
+                }
+            }
+        }
+        catch (e) {
+            // If fetching fees fails, continue with trades without fees
+            // This ensures backward compatibility if fetchTransactions has issues
+        }
+        return trades;
     }
     parseTrade(trade, market = undefined) {
         const timestamp = this.parse8601(trade['TradeTimestampUtc']);
@@ -819,6 +877,73 @@ class independentreserve extends independentreserve$1 {
             };
         }
         return result;
+    }
+    /**
+     * @method
+     * @name independentreserve#fetchTransactions
+     * @description fetch history of deposits, withdrawals, and other transactions
+     * @see https://www.independentreserve.com/API#GetTransactions
+     * @param {string} [code] unified currency code for the currency of the transactions, default is undefined
+     * @param {int} [since] timestamp in ms of the earliest transaction, default is undefined
+     * @param {int} [limit] max number of transactions to return, default is 50
+     * @param {object} [params] extra parameters specific to the exchange API endpoint
+     * @param {string[]} [params.txTypes] array of transaction types to filter by (e.g., ['Brokerage', 'Trade', 'Deposit'])
+     * @returns {object[]} a list of [transaction structures]{@link https://docs.ccxt.com/#/?id=transaction-structure}
+     */
+    async fetchTransactions(code = undefined, since = undefined, limit = 50, params = {}) {
+        await this.loadMarkets();
+        let currency = undefined;
+        const request = this.ordered({
+            'pageIndex': this.safeInteger(params, 'pageIndex', 1),
+            'pageSize': limit,
+        });
+        if (code !== undefined) {
+            currency = this.currency(code);
+            request['primaryCurrencyCode'] = currency['id'];
+        }
+        if (since !== undefined) {
+            request['fromTimestampUtc'] = this.iso8601(since);
+        }
+        const txTypes = this.safeValue(params, 'txTypes');
+        if (txTypes !== undefined) {
+            request['txTypes'] = txTypes;
+        }
+        params = this.omit(params, ['pageIndex', 'txTypes']);
+        const response = await this.privatePostGetTransactions(this.extend(request, params));
+        //
+        //     {
+        //         "Data": [
+        //             {
+        //                 "Balance": 100.0,
+        //                 "BitcoinTransactionId": null,
+        //                 "BitcoinTransactionOutputIndex": null,
+        //                 "Comment": null,
+        //                 "CreatedTimestampUtc": "2014-09-23T12:39:34.3817763Z",
+        //                 "Credit": 100.0,
+        //                 "CurrencyCode": "Xbt",
+        //                 "Debit": null,
+        //                 "EthereumTransactionId": null,
+        //                 "Status": "Confirmed",
+        //                 "Type": "Deposit",
+        //                 "TransactionGuid": "6a8a1c5f-c7e2-485a-9da3-33db59f14bc8"
+        //             },
+        //             {
+        //                 "Balance": 93.02,
+        //                 "Credit": null,
+        //                 "Debit": 6.98,
+        //                 "Type": "Brokerage",
+        //                 "CreatedTimestampUtc": "2014-09-23T12:39:34.3817763Z",
+        //                 "CurrencyCode": "Usd",
+        //                 "TransactionGuid": "bb8c8d5f-c7e2-485a-9da3-33db59f14bc9"
+        //             }
+        //         ],
+        //         "PageSize": 25,
+        //         "TotalItems": 2,
+        //         "TotalPages": 1
+        //     }
+        //
+        const data = this.safeList(response, 'Data', []);
+        return this.parseTransactions(data, currency, since, limit);
     }
     /**
      * @method
@@ -988,6 +1113,7 @@ class independentreserve extends independentreserve$1 {
     }
     parseTransaction(transaction, currency = undefined) {
         //
+        // withdraw() response
         //    {
         //        "TransactionGuid": "dc932e19-562b-4c50-821e-a73fd048b93b",
         //        "PrimaryCurrencyCode": "Bch",
@@ -1004,21 +1130,81 @@ class independentreserve extends independentreserve$1 {
         //        "Transaction": null
         //    }
         //
+        // fetchTransactions() / GetTransactions response
+        //    {
+        //        "Balance": 93.02,
+        //        "Credit": null,
+        //        "Debit": 6.98,
+        //        "Type": "Brokerage",
+        //        "CreatedTimestampUtc": "2014-09-23T12:39:34.3817763Z",
+        //        "CurrencyCode": "Usd",
+        //        "TransactionGuid": "bb8c8d5f-c7e2-485a-9da3-33db59f14bc9"
+        //    }
+        //
         const amount = this.safeDict(transaction, 'Amount');
         const destination = this.safeDict(transaction, 'Destination');
-        const currencyId = this.safeString(transaction, 'PrimaryCurrencyCode');
+        const currencyId = this.safeString2(transaction, 'PrimaryCurrencyCode', 'CurrencyCode');
         const datetime = this.safeString(transaction, 'CreatedTimestampUtc');
         const address = this.safeString(destination, 'Address');
         const tag = this.safeString(destination, 'Tag');
         const code = this.safeCurrencyCode(currencyId, currency);
+        //
+        // Determine transaction type from 'Type' field or default to 'withdraw' for legacy response
+        //
+        let type = this.safeStringLower(transaction, 'Type');
+        if (type !== undefined) {
+            // Map Independent Reserve transaction types to CCXT types
+            if (type === 'deposit') {
+                type = 'deposit';
+            }
+            else if (type === 'withdrawal') {
+                type = 'withdrawal';
+            }
+            else if (type === 'trade') {
+                type = 'trade';
+            }
+            else if ((type === 'brokerage') || (type === 'depositfee') || (type === 'withdrawalfee') || (type === 'accountfee') || (type === 'statementfee') || (type === 'gst')) {
+                type = 'fee';
+            }
+            else if (type === 'referralcommission') {
+                type = 'rebate';
+            }
+        }
+        else {
+            type = 'withdrawal'; // legacy withdraw() response
+        }
+        //
+        // Amount handling: GetTransactions uses Credit/Debit, withdraw() uses Amount.Total
+        //
+        let transactionAmount = this.safeNumber(amount, 'Total');
+        const credit = this.safeNumber(transaction, 'Credit');
+        const debit = this.safeNumber(transaction, 'Debit');
+        if (credit !== undefined) {
+            transactionAmount = credit;
+        }
+        else if (debit !== undefined) {
+            transactionAmount = debit;
+        }
+        //
+        // Fee handling
+        //
+        let feeCost = this.safeNumber(amount, 'Fee');
+        if ((type === 'fee') && (debit !== undefined)) {
+            // For fee transactions, the debit amount IS the fee
+            feeCost = debit;
+        }
+        //
+        // Transaction ID handling
+        //
+        const txid = this.safeString2(transaction, 'BitcoinTransactionId', 'EthereumTransactionId');
         return {
             'info': transaction,
             'id': this.safeString(transaction, 'TransactionGuid'),
-            'txid': undefined,
-            'type': 'withdraw',
+            'txid': txid,
+            'type': type,
             'currency': code,
             'network': undefined,
-            'amount': this.safeNumber(amount, 'Total'),
+            'amount': transactionAmount,
             'status': this.safeString(transaction, 'Status'),
             'timestamp': this.parse8601(datetime),
             'datetime': datetime,
@@ -1029,10 +1215,10 @@ class independentreserve extends independentreserve$1 {
             'tagFrom': undefined,
             'tagTo': tag,
             'updated': undefined,
-            'comment': undefined,
+            'comment': this.safeString(transaction, 'Comment'),
             'fee': {
                 'currency': code,
-                'cost': this.safeNumber(amount, 'Fee'),
+                'cost': feeCost,
                 'rate': undefined,
             },
             'internal': false,

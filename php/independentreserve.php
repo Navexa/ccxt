@@ -71,6 +71,7 @@ class independentreserve extends Exchange {
                 'fetchTrades' => true,
                 'fetchTradingFee' => false,
                 'fetchTradingFees' => true,
+                'fetchTransactions' => true,
                 'reduceMargin' => false,
                 'setLeverage' => false,
                 'setMarginMode' => false,
@@ -679,12 +680,12 @@ class independentreserve extends Exchange {
 
     public function fetch_my_trades(?string $symbol = null, ?int $since = null, ?int $limit = 50, $params = array ()) {
         /**
-         * fetch all trades made by the user
+         * fetch all $trades made by the user
          * @param {string} $symbol unified $market $symbol
-         * @param {int} [$since] the earliest time in ms to fetch trades for
-         * @param {int} [$limit] the maximum number of trades structures to retrieve
+         * @param {int} [$since] the earliest time in ms to fetch $trades for
+         * @param {int} [$limit] the maximum number of $trades structures to retrieve
          * @param {array} [$params] extra parameters specific to the exchange API endpoint
-         * @return {Trade[]} a list of ~@link https://docs.ccxt.com/#/?id=trade-structure trade structures~
+         * @return {Trade[]} a list of ~@link https://docs.ccxt.com/#/?id=$trade-structure $trade structures~
          */
         $this->load_markets();
         $pageIndex = $this->safe_integer($params, 'pageIndex', 1);
@@ -700,7 +701,63 @@ class independentreserve extends Exchange {
         if ($symbol !== null) {
             $market = $this->market($symbol);
         }
-        return $this->parse_trades($response['Data'], $market, $since, $limit);
+        $trades = $this->parse_trades($response['Data'], $market, $since, $limit);
+        //
+        // Fetch brokerage fees and match them to $trades
+        //
+        try {
+            $brokerageFees = $this->fetch_transactions(null, $since, $limit, array( 'txTypes' => array( 'Brokerage' ) ));
+            // Create a map of fees by timestamp and currency for efficient matching
+            $feeMap = array();
+            for ($i = 0; $i < count($brokerageFees); $i++) {
+                $fee = $brokerageFees[$i];
+                $feeTimestamp = $fee['timestamp'];
+                $feeCurrency = $fee['currency'];
+                $key = $feeTimestamp . ':' . $feeCurrency;
+                if ($feeMap[$key] === null) {
+                    $feeMap[$key] = array();
+                }
+                $feeMap[$key][] = $fee;
+            }
+            // Match fees to $trades
+            for ($i = 0; $i < count($trades); $i++) {
+                $trade = $trades[$i];
+                $tradeTimestamp = $trade['timestamp'];
+                $tradeMarket = $this->safe_market($trade['symbol']);
+                $quoteCurrency = $tradeMarket['quote'];
+                // Try exact timestamp match first
+                $key = $tradeTimestamp . ':' . $quoteCurrency;
+                $matchedFees = $this->safe_value($feeMap, $key);
+                // If no exact match, try within ±5 seconds
+                if ($matchedFees === null) {
+                    for ($offset = -5000; $offset <= 5000; $offset += 1000) {
+                        $key = ($tradeTimestamp . $offset) . ':' . $quoteCurrency;
+                        $matchedFees = $this->safe_value($feeMap, $key);
+                        if ($matchedFees !== null) {
+                            break;
+                        }
+                    }
+                }
+                // If we found matching fees, use the first one (should only be one per $trade)
+                if ($matchedFees !== null && strlen($matchedFees) > 0) {
+                    $matchedFee = $matchedFees[0];
+                    $trade['fee'] = array(
+                        'currency' => $quoteCurrency,
+                        'cost' => $this->safe_number($matchedFee, 'amount'),
+                        'rate' => null,
+                    );
+                    // Remove used $fee from map to avoid double-matching
+                    array_shift($matchedFees);
+                    if (strlen($matchedFees) === 0) {
+                        unset($feeMap[$key]);
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            // If fetching fees fails, continue with $trades without fees
+            // This ensures backward compatibility if fetchTransactions has issues
+        }
+        return $trades;
     }
 
     public function parse_trade(array $trade, ?array $market = null): array {
@@ -807,6 +864,74 @@ class independentreserve extends Exchange {
             );
         }
         return $result;
+    }
+
+    public function fetch_transactions(?string $code = null, ?int $since = null, ?int $limit = 50, $params = array ()) {
+        /**
+         * fetch history of deposits, withdrawals, and other transactions
+         *
+         * @see https://www.independentreserve.com/API#GetTransactions
+         *
+         * @param {string} [$code] unified $currency $code for the $currency of the transactions, default is null
+         * @param {int} [$since] timestamp in ms of the earliest transaction, default is null
+         * @param {int} [$limit] max number of transactions to return, default is 50
+         * @param {array} [$params] extra parameters specific to the exchange API endpoint
+         * @param {string[]} [$params->txTypes] array of transaction types to filter by (e.g., ['Brokerage', 'Trade', 'Deposit'])
+         * @return {array[]} a list of ~@link https://docs.ccxt.com/#/?id=transaction-structure transaction structures~
+         */
+        $this->load_markets();
+        $currency = null;
+        $request = $this->ordered(array(
+            'pageIndex' => $this->safe_integer($params, 'pageIndex', 1),
+            'pageSize' => $limit,
+        ));
+        if ($code !== null) {
+            $currency = $this->currency($code);
+            $request['primaryCurrencyCode'] = $currency['id'];
+        }
+        if ($since !== null) {
+            $request['fromTimestampUtc'] = $this->iso8601($since);
+        }
+        $txTypes = $this->safe_value($params, 'txTypes');
+        if ($txTypes !== null) {
+            $request['txTypes'] = $txTypes;
+        }
+        $params = $this->omit($params, array( 'pageIndex', 'txTypes' ));
+        $response = $this->privatePostGetTransactions ($this->extend($request, $params));
+        //
+        //     {
+        //         "Data" => array(
+        //             array(
+        //                 "Balance" => 100.0,
+        //                 "BitcoinTransactionId" => null,
+        //                 "BitcoinTransactionOutputIndex" => null,
+        //                 "Comment" => null,
+        //                 "CreatedTimestampUtc" => "2014-09-23T12:39:34.3817763Z",
+        //                 "Credit" => 100.0,
+        //                 "CurrencyCode" => "Xbt",
+        //                 "Debit" => null,
+        //                 "EthereumTransactionId" => null,
+        //                 "Status" => "Confirmed",
+        //                 "Type" => "Deposit",
+        //                 "TransactionGuid" => "6a8a1c5f-c7e2-485a-9da3-33db59f14bc8"
+        //             ),
+        //             {
+        //                 "Balance" => 93.02,
+        //                 "Credit" => null,
+        //                 "Debit" => 6.98,
+        //                 "Type" => "Brokerage",
+        //                 "CreatedTimestampUtc" => "2014-09-23T12:39:34.3817763Z",
+        //                 "CurrencyCode" => "Usd",
+        //                 "TransactionGuid" => "bb8c8d5f-c7e2-485a-9da3-33db59f14bc9"
+        //             }
+        //         ),
+        //         "PageSize" => 25,
+        //         "TotalItems" => 2,
+        //         "TotalPages" => 1
+        //     }
+        //
+        $data = $this->safe_list($response, 'Data', array());
+        return $this->parse_transactions($data, $currency, $since, $limit);
     }
 
     public function create_order(string $symbol, string $type, string $side, float $amount, ?float $price = null, $params = array ()) {
@@ -979,6 +1104,7 @@ class independentreserve extends Exchange {
 
     public function parse_transaction(array $transaction, ?array $currency = null): array {
         //
+        // withdraw() response
         //    {
         //        "TransactionGuid" => "dc932e19-562b-4c50-821e-a73fd048b93b",
         //        "PrimaryCurrencyCode" => "Bch",
@@ -995,21 +1121,75 @@ class independentreserve extends Exchange {
         //        "Transaction" => null
         //    }
         //
+        // fetchTransactions() / GetTransactions response
+        //    {
+        //        "Balance" => 93.02,
+        //        "Credit" => null,
+        //        "Debit" => 6.98,
+        //        "Type" => "Brokerage",
+        //        "CreatedTimestampUtc" => "2014-09-23T12:39:34.3817763Z",
+        //        "CurrencyCode" => "Usd",
+        //        "TransactionGuid" => "bb8c8d5f-c7e2-485a-9da3-33db59f14bc9"
+        //    }
+        //
         $amount = $this->safe_dict($transaction, 'Amount');
         $destination = $this->safe_dict($transaction, 'Destination');
-        $currencyId = $this->safe_string($transaction, 'PrimaryCurrencyCode');
+        $currencyId = $this->safe_string_2($transaction, 'PrimaryCurrencyCode', 'CurrencyCode');
         $datetime = $this->safe_string($transaction, 'CreatedTimestampUtc');
         $address = $this->safe_string($destination, 'Address');
         $tag = $this->safe_string($destination, 'Tag');
         $code = $this->safe_currency_code($currencyId, $currency);
+        //
+        // Determine $transaction $type from 'Type' field or default to 'withdraw' for legacy response
+        //
+        $type = $this->safe_string_lower($transaction, 'Type');
+        if ($type !== null) {
+            // Map Independent Reserve $transaction types to CCXT types
+            if ($type === 'deposit') {
+                $type = 'deposit';
+            } elseif ($type === 'withdrawal') {
+                $type = 'withdrawal';
+            } elseif ($type === 'trade') {
+                $type = 'trade';
+            } elseif (($type === 'brokerage') || ($type === 'depositfee') || ($type === 'withdrawalfee') || ($type === 'accountfee') || ($type === 'statementfee') || ($type === 'gst')) {
+                $type = 'fee';
+            } elseif ($type === 'referralcommission') {
+                $type = 'rebate';
+            }
+        } else {
+            $type = 'withdrawal';  // legacy withdraw() response
+        }
+        //
+        // Amount handling => GetTransactions uses Credit/Debit, withdraw() uses Amount.Total
+        //
+        $transactionAmount = $this->safe_number($amount, 'Total');
+        $credit = $this->safe_number($transaction, 'Credit');
+        $debit = $this->safe_number($transaction, 'Debit');
+        if ($credit !== null) {
+            $transactionAmount = $credit;
+        } elseif ($debit !== null) {
+            $transactionAmount = $debit;
+        }
+        //
+        // Fee handling
+        //
+        $feeCost = $this->safe_number($amount, 'Fee');
+        if (($type === 'fee') && ($debit !== null)) {
+            // For fee transactions, the $debit $amount IS the fee
+            $feeCost = $debit;
+        }
+        //
+        // Transaction ID handling
+        //
+        $txid = $this->safe_string_2($transaction, 'BitcoinTransactionId', 'EthereumTransactionId');
         return array(
             'info' => $transaction,
             'id' => $this->safe_string($transaction, 'TransactionGuid'),
-            'txid' => null,
-            'type' => 'withdraw',
+            'txid' => $txid,
+            'type' => $type,
             'currency' => $code,
             'network' => null,
-            'amount' => $this->safe_number($amount, 'Total'),
+            'amount' => $transactionAmount,
             'status' => $this->safe_string($transaction, 'Status'),
             'timestamp' => $this->parse8601($datetime),
             'datetime' => $datetime,
@@ -1020,10 +1200,10 @@ class independentreserve extends Exchange {
             'tagFrom' => null,
             'tagTo' => $tag,
             'updated' => null,
-            'comment' => null,
+            'comment' => $this->safe_string($transaction, 'Comment'),
             'fee' => array(
                 'currency' => $code,
-                'cost' => $this->safe_number($amount, 'Fee'),
+                'cost' => $feeCost,
                 'rate' => null,
             ),
             'internal' => false,

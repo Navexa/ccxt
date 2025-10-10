@@ -110,6 +110,19 @@ export default class independentreserve extends Exchange {
     fetchTradingFees(params?: {}): Promise<TradingFees>;
     /**
      * @method
+     * @name independentreserve#fetchTransactions
+     * @description fetch history of deposits, withdrawals, and other transactions
+     * @see https://www.independentreserve.com/API#GetTransactions
+     * @param {string} [code] unified currency code for the currency of the transactions, default is undefined
+     * @param {int} [since] timestamp in ms of the earliest transaction, default is undefined
+     * @param {int} [limit] max number of transactions to return, default is 50
+     * @param {object} [params] extra parameters specific to the exchange API endpoint
+     * @param {string[]} [params.txTypes] array of transaction types to filter by (e.g., ['Brokerage', 'Trade', 'Deposit'])
+     * @returns {object[]} a list of [transaction structures]{@link https://docs.ccxt.com/#/?id=transaction-structure}
+     */
+    fetchTransactions(code?: Str, since?: Int, limit?: Int, params?: {}): Promise<Transaction[]>;
+    /**
+     * @method
      * @name independentreserve#createOrder
      * @description create a trade order
      * @param {string} symbol unified symbol of the market to create an order in
