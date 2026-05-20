@@ -300,7 +300,7 @@ class swyftx extends swyftx$1 {
         let timestamp = undefined;
         if (dateStr && timeStr) {
             const [day, month, year] = dateStr.split('/');
-            const datetime = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${timeStr}`;
+            const datetime = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${timeStr}+10:00`;
             timestamp = this.parse8601(datetime);
         }
         // Handle different transaction types
@@ -319,11 +319,21 @@ class swyftx extends swyftx$1 {
             }
             if (event === 'buy') {
                 side = 'buy';
+                type = 'market';
             }
             else if (event === 'sell') {
                 side = 'sell';
+                type = 'market';
             }
-            type = 'market';
+            else if (event === 'withdrawal') {
+                type = 'withdrawal';
+            }
+            else if (event === 'deposit') {
+                type = 'deposit';
+            }
+            else {
+                type = 'market';
+            }
             price = this.parseNumber(rate);
             cost = this.parseNumber(paidValue);
         }
@@ -414,7 +424,7 @@ class swyftx extends swyftx$1 {
         let timestamp = undefined;
         if (dateStr && timeStr) {
             const [day, month, year] = dateStr.split('/');
-            const datetime = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${timeStr}`;
+            const datetime = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${timeStr}+10:00`;
             timestamp = this.parse8601(datetime);
         }
         const code = this.safeCurrencyCode(asset, currency);
@@ -516,6 +526,19 @@ class swyftx extends swyftx$1 {
     handleErrors(code, reason, url, method, headers, body, response, requestHeaders, requestBody) {
         if (response === undefined) {
             return undefined;
+        }
+        // Handle {"error": {"error": "QueryError|AuthError", "message": "..."}} shape (e.g. /auth/refresh/)
+        const errorObject = this.safeValue(response, 'error');
+        if (errorObject !== undefined && typeof errorObject === 'object') {
+            const errorCode = this.safeString(errorObject, 'error');
+            const errorMessage = this.safeString(errorObject, 'message', 'Unknown error');
+            if (errorCode === 'AuthError' || errorCode === 'UNAUTHORIZED') {
+                throw new errors.AuthenticationError(this.id + ' ' + errorMessage + ' (invalid API key)');
+            }
+            if (errorCode === 'QueryError') {
+                throw new errors.AuthenticationError(this.id + ' ' + errorMessage + ' (invalid API key)');
+            }
+            throw new errors.ExchangeError(this.id + ' ' + errorMessage);
         }
         const success = this.safeValue(response, 'success');
         if (success === false) {

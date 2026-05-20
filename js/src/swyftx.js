@@ -530,6 +530,19 @@ export default class swyftx extends Exchange {
         if (response === undefined) {
             return undefined;
         }
+        // Handle {"error": {"error": "QueryError|AuthError", "message": "..."}} shape (e.g. /auth/refresh/)
+        const errorObject = this.safeValue(response, 'error');
+        if (errorObject !== undefined && typeof errorObject === 'object') {
+            const errorCode = this.safeString(errorObject, 'error');
+            const errorMessage = this.safeString(errorObject, 'message', 'Unknown error');
+            if (errorCode === 'AuthError' || errorCode === 'UNAUTHORIZED') {
+                throw new AuthenticationError(this.id + ' ' + errorMessage + ' (invalid API key)');
+            }
+            if (errorCode === 'QueryError') {
+                throw new AuthenticationError(this.id + ' ' + errorMessage + ' (invalid API key)');
+            }
+            throw new ExchangeError(this.id + ' ' + errorMessage);
+        }
         const success = this.safeValue(response, 'success');
         if (success === false) {
             const message = this.safeString(response, 'message', body);
