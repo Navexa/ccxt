@@ -301,11 +301,11 @@ export default class swyftx extends Exchange {
         const feeAmount = this.safeString (trade, 'Fee Amount');
         const feeAsset = this.safeString (trade, 'Fee Asset');
         const section = this.safeString (trade, '_section');
-        // Parse datetime from DD/MM/YYYY HH:MM:SS format
+        // Parse datetime from DD/MM/YYYY HH:MM:SS format (Swyftx times are AEST/+10:00)
         let timestamp = undefined;
         if (dateStr && timeStr) {
             const [ day, month, year ] = dateStr.split ('/');
-            const datetime = `${year}-${month.padStart (2, '0')}-${day.padStart (2, '0')}T${timeStr}`;
+            const datetime = `${year}-${month.padStart (2, '0')}-${day.padStart (2, '0')}T${timeStr}+10:00`;
             timestamp = this.parse8601 (datetime);
         }
         // Handle different transaction types
@@ -323,10 +323,17 @@ export default class swyftx extends Exchange {
             }
             if (event === 'buy') {
                 side = 'buy';
+                type = 'market';
             } else if (event === 'sell') {
                 side = 'sell';
+                type = 'market';
+            } else if (event === 'withdrawal') {
+                type = 'withdrawal';
+            } else if (event === 'deposit') {
+                type = 'deposit';
+            } else {
+                type = 'market';
             }
-            type = 'market';
             price = this.parseNumber (rate);
             cost = this.parseNumber (paidValue);
         } else if (section === 'Fiat Transactions') {
@@ -413,11 +420,11 @@ export default class swyftx extends Exchange {
         const uuid = this.safeString (transaction, 'UUID');
         const feeAmount = this.safeString (transaction, 'Fee Amount');
         const feeAsset = this.safeString (transaction, 'Fee Asset');
-        // Parse datetime from DD/MM/YYYY HH:MM:SS format
+        // Parse datetime from DD/MM/YYYY HH:MM:SS format (Swyftx times are AEST/+10:00)
         let timestamp = undefined;
         if (dateStr && timeStr) {
             const [ day, month, year ] = dateStr.split ('/');
-            const datetime = `${year}-${month.padStart (2, '0')}-${day.padStart (2, '0')}T${timeStr}`;
+            const datetime = `${year}-${month.padStart (2, '0')}-${day.padStart (2, '0')}T${timeStr}+10:00`;
             timestamp = this.parse8601 (datetime);
         }
         const code = this.safeCurrencyCode (asset, currency);

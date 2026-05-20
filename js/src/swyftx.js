@@ -299,7 +299,7 @@ export default class swyftx extends Exchange {
         const feeAmount = this.safeString(trade, 'Fee Amount');
         const feeAsset = this.safeString(trade, 'Fee Asset');
         const section = this.safeString(trade, '_section');
-        // Parse datetime from DD/MM/YYYY HH:MM:SS format
+        // Parse datetime from DD/MM/YYYY HH:MM:SS format (Swyftx times are AEST/+10:00)
         let timestamp = undefined;
         if (dateStr && timeStr) {
             const [day, month, year] = dateStr.split('/');
@@ -423,7 +423,7 @@ export default class swyftx extends Exchange {
         const uuid = this.safeString(transaction, 'UUID');
         const feeAmount = this.safeString(transaction, 'Fee Amount');
         const feeAsset = this.safeString(transaction, 'Fee Asset');
-        // Parse datetime from DD/MM/YYYY HH:MM:SS format
+        // Parse datetime from DD/MM/YYYY HH:MM:SS format (Swyftx times are AEST/+10:00)
         let timestamp = undefined;
         if (dateStr && timeStr) {
             const [day, month, year] = dateStr.split('/');
