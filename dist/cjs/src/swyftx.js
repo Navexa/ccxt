@@ -4,7 +4,7 @@ var swyftx$1 = require('./abstract/swyftx.js');
 var errors = require('./base/errors.js');
 var number = require('./base/functions/number.js');
 
-// ----------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
 //  ---------------------------------------------------------------------------
 /**
  * @class swyftx
@@ -529,7 +529,7 @@ class swyftx extends swyftx$1 {
         }
         // Handle {"error": {"error": "QueryError|AuthError", "message": "..."}} shape (e.g. /auth/refresh/)
         const errorObject = this.safeValue(response, 'error');
-        if (errorObject !== undefined && typeof errorObject === 'object') {
+        if (errorObject !== undefined && errorObject !== null && typeof errorObject === 'object') {
             const errorCode = this.safeString(errorObject, 'error');
             const errorMessage = this.safeString(errorObject, 'message', 'Unknown error');
             if (errorCode === 'AuthError' || errorCode === 'UNAUTHORIZED') {
