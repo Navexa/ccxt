@@ -5,8 +5,8 @@ import ccxt from './js/ccxt.js';
 
 // Create Swyftx exchange instance
 const exchange = new ccxt.swyftx({
-    'apiKey': '71K_tfF3lIt_0hlLJH9kup_CXCtI7-6S1A_WSbW-HyX5D',     // Replace with your API key
-    'secret': 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IlJrVTRRelF6TlRaQk5rTkNORGsyTnpnME9EYzNOVEZGTWpaRE9USTRNalV6UXpVNE1UUkROUSJ9.eyJodHRwczovL3N3eWZ0eC5jb20uYXUvLWp0aSI6IjhkY2JmNjI2LTMwMDMtNDYyMy04YTc3LWIyNjM1NmViYWZmZSIsImh0dHBzOi8vc3d5ZnR4LmNvbS5hdS8tbWZhX2VuYWJsZWQiOmZhbHNlLCJodHRwczovL3N3eWZ0eC5jb20uYXUvLXVzZXJVdWlkIjoidXNyX0JWS3pEN3VWU3V6V1gydjhaTGdjeG8iLCJpc3MiOiJodHRwczovL3N3eWZ0eC5hdS5hdXRoMC5jb20vIiwic3ViIjoiYXV0aDB8NjdlMjA3MzI3Mzc3MzA0MWM2NGQ1ZTI5IiwiYXVkIjoiaHR0cHM6Ly9hcGkuc3d5ZnR4LmNvbS5hdS8iLCJpYXQiOjE3NTM0MjA5NTEsImV4cCI6MTc1NDAyNTc1MSwic2NvcGUiOiJhcHAuYWNjb3VudC50YXgtcmVwb3J0IGFwcC5hY2NvdW50LmJhbGFuY2UgYXBwLmFjY291bnQucmVhZCBhcHAucmVjdXJyaW5nLW9yZGVycy5yZWFkIGFwcC5hZGRyZXNzLnJlYWQgYXBwLmZ1bmRzLnJlYWQgYXBwLm9yZGVycy5yZWFkIGFwcC5hcGkucmVhZCBvZmZsaW5lX2FjY2VzcyIsImd0eSI6InBhc3N3b3JkIiwiYXpwIjoiRVF3M2ZhQXhPVGhSWVRaeXkxdWxaRGk4REhSQVlkRU8ifQ.AmTMHZw1M6AhL-nqkXrlOgZ3HIQxirzgp_7R1t9G1WOtjdpDYzy8VWn4mvS4VV2cgAloIdOairYZBV_udjidX81vhahnWq5iT6I6VRJ_kcNPIRjdW1RRsBtg5pQ9Z4u_IWxf2R6FitCz18yFKgsZuwPZ4xBsL_iLPzNgZxQBtIn-sNsMQwjBxmaReQ0oH_7-uUfha4vVRSkdSk28LcNjbHI56SYri3ZaSCPPzn3ACj2kOt5pKFQh3w9Kx1utQ8OOdEh8iWW3dQKN6KSZy9efOUcs9OUMu935YxjQnJXjBwgxsj3g_cSyJimetUGBULiKimxo7J-hTjlAXeJQJzAl5A',   // Replace with your JWT token
+    'apiKey': process.env.SWYFTX_API_KEY,     // Replace with your API key
+    'secret': process.env.SWYFTX_ACCESS_TOKEN,   // Replace with your JWT token
     'sandbox': false,                   // Set to true for testing if Swyftx has sandbox
     'enableRateLimit': true,
 });
