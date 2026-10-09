@@ -1,0 +1,30 @@
+Opening Crypto Summary
+no positions held
+,,sub total,,,,,,0
+
+Opening Fiat Summary
+no positions held
+,,sub total,,,,,,0
+
+Crypto Transactions
+Date,Time,Event,Asset,Amount,Currency,Value,Rate,AUD Value Fee,AUD Value,Fee Amount,Fee Asset,GST,ExGST,Deposited To,Withdrawn To,Withdrawal Fee,Reference,Transaction ID,UUID,Type
+5/3/2024,9:12:00,buy,BTC,0.001,AUD,100,100000,0.6,100.6,0.000006,BTC,,,,,,,tx-a,uuid-a,Buy
+15/11/2023,14:30:45,otc buy,ETH,0.5,AUD,1250,,,,7.5,AUD,,,,,,,,uuid-b,OTC Buy
+20/12/2023,0:05:09,sell,BTC,0.002,AUD,180,90000,,,1.08,AUD,,,,,,,tx-c,uuid-c,Sell
+1/2/2024,23:59:59,deposit,SOL,3,,,,,,,,,,SOL Wallet,,,,,uuid-d,Deposit
+2/2/2024,8:00:00,withdraw,SOL,1,,,,,,,,,,,SOL Wallet,0.01,,,uuid-e,Withdraw
+,,sub total,,,,,,0
+
+Fiat Transactions
+Date,Time,Event,Asset,Amount,Currency,Value,Rate,AUD Value Fee,AUD Value,Fee Amount,Fee Asset,GST,ExGST,Deposited To,Withdrawn To,Withdrawal Fee,Reference,Transaction ID,UUID,Type
+3/4/2024,10:00:00,deposit,AUD,500,,,,,,,,,,,,,,,uuid-f,Deposit
+4/4/2024,15:20:10,withdraw,AUD,200,,,,,,,,,,,,,,,uuid-g,Withdraw
+,,sub total,,,,,,0
+
+Closing Crypto Summary
+30/6/2024,23:59:59,open position,BTC,0.01,AUD,1000,100000,,,,,,,,,,,,uuid-open,
+,,sub total,,,,,,0
+
+Closing Fiat Summary
+no positions held
+,,sub total,,,,,,0

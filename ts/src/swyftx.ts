@@ -1,8 +1,9 @@
 //  ---------------------------------------------------------------------------
 
 import Exchange from './abstract/swyftx.js';
-import { ExchangeError, AuthenticationError } from './base/errors.js';
+import { ExchangeError, AuthenticationError, RateLimitExceeded } from './base/errors.js';
 import { TICK_SIZE } from './base/functions/number.js';
+import { Precise } from './base/Precise.js';
 import type { Balances, Dict, Int, Market, Str, Trade, Transaction, Currency } from './base/types.js';
 //  ---------------------------------------------------------------------------
 
@@ -207,13 +208,8 @@ export default class swyftx extends Exchange {
 
     async fetchMyTrades (symbol: Str = undefined, since: Int = undefined, limit: Int = undefined, params = {}): Promise<Trade[]> {
         const request: Dict = {};
-        // 'from' parameter is required by the API
-        if (since !== undefined) {
-            request['from'] = since;
-        } else {
-            // Default to 1 year ago if not specified
-            request['from'] = Date.now () - (365 * 24 * 60 * 60 * 1000);
-        }
+        const earliest = this.parse8601 ('2018-07-01T00:00:00+10:00');
+        request['from'] = (since !== undefined) ? Math.max (since, earliest) : earliest;
         // 'to' parameter is required by the API
         const to = this.safeInteger (params, 'to');
         request['to'] = (to !== undefined) ? to : Date.now ();
@@ -222,15 +218,11 @@ export default class swyftx extends Exchange {
         // Add 'type' parameter (csv or pdf - API doesn't support json)
         request['type'] = this.safeString (params, 'type', 'csv');
         const response = await this.privateGetUserTransactionReport (this.extend (request, params));
-        // Parse CSV response
-        if (typeof response === 'string' && response.includes ('Crypto Transactions')) {
-            const csvTransactions = this.parseSwyftxCsvTransactions (response);
-            // Return ALL transactions (both crypto trades and fiat deposits) as trades
-            return this.parseTrades (csvTransactions, undefined, since, limit);
+        if (typeof response !== 'string' || !/(Crypto|Fiat) (Transactions|Summary)/.test (response)) {
+            throw new ExchangeError (this.id + ' fetchMyTrades() unexpected response ' + ((typeof response === 'string') ? response : this.json (response)));
         }
-        // Fallback for other response formats
-        const transactions = this.safeValue (response, 'data', []);
-        return this.parseTrades (transactions, undefined, since, limit);
+        const csvTransactions = this.parseSwyftxCsvTransactions (response);
+        return this.parseTrades (csvTransactions, undefined, since, limit);
     }
 
     async fetchBalance (params = {}): Promise<Balances> {
@@ -301,11 +293,10 @@ export default class swyftx extends Exchange {
         const feeAmount = this.safeString (trade, 'Fee Amount');
         const feeAsset = this.safeString (trade, 'Fee Asset');
         const section = this.safeString (trade, '_section');
-        // Parse datetime from DD/MM/YYYY HH:MM:SS format (Swyftx times are AEST/+10:00)
         let timestamp = undefined;
         if (dateStr && timeStr) {
             const [ day, month, year ] = dateStr.split ('/');
-            const datetime = `${year}-${month.padStart (2, '0')}-${day.padStart (2, '0')}T${timeStr}+10:00`;
+            const datetime = `${year}-${month.padStart (2, '0')}-${day.padStart (2, '0')}T${timeStr.padStart (8, '0')}+10:00`;
             timestamp = this.parse8601 (datetime);
         }
         // Handle different transaction types
@@ -321,13 +312,13 @@ export default class swyftx extends Exchange {
             } else if (paidCurrency && paidCurrency !== asset) {
                 symbol = asset + '/' + paidCurrency;
             }
-            if (event === 'buy') {
+            if (event === 'buy' || event === 'otc buy') {
                 side = 'buy';
                 type = 'market';
-            } else if (event === 'sell') {
+            } else if (event === 'sell' || event === 'otc sell') {
                 side = 'sell';
                 type = 'market';
-            } else if (event === 'withdrawal') {
+            } else if (event === 'withdraw') {
                 type = 'withdrawal';
             } else if (event === 'deposit') {
                 type = 'deposit';
@@ -335,16 +326,19 @@ export default class swyftx extends Exchange {
                 type = 'market';
             }
             price = this.parseNumber (rate);
+            if (price === undefined) {
+                price = this.parseNumber (Precise.stringDiv (paidValue, amount));
+            }
             cost = this.parseNumber (paidValue);
         } else if (section === 'Fiat Transactions') {
             // Fiat deposits/withdrawals - represent as trades for consistency
             symbol = asset + '/AUD'; // AUD deposits/withdrawals
             if (event === 'deposit') {
                 side = 'buy';
-            } else if (event === 'withdrawal') {
+            } else if (event === 'withdraw') {
                 side = 'sell';
             }
-            type = event; // 'deposit' or 'withdrawal'
+            type = event;
             price = 1; // 1:1 for fiat
             cost = this.parseNumber (amount); // Amount is the cost for fiat
         }
@@ -486,6 +480,10 @@ export default class swyftx extends Exchange {
         let headers = [];
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim ();
+            if (/^[^,]*Summary/.test (line)) {
+                currentSection = '';
+                continue;
+            }
             if (line === 'Crypto Transactions' || line === 'Fiat Transactions') {
                 currentSection = line;
                 // Next line should be headers
@@ -526,6 +524,9 @@ export default class swyftx extends Exchange {
     }
 
     handleErrors (code: Int, reason: string, url: string, method: string, headers: Dict, body: string, response: any, requestHeaders: any, requestBody: any): any {
+        if (code === 429 || /wait \d+ minutes/i.test (body)) {
+            throw new RateLimitExceeded (this.id + ' rate limit exceeded: ' + body);
+        }
         if (response === undefined) {
             return undefined;
         }
